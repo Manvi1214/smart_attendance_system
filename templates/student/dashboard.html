@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - Smart Attendance System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+{% endblock %}
+
+<!-- Nav/Back controls for student dashboard -->
+{% block content %}
+<div class="container animate-fade-in" style="padding-top: 40px; padding-bottom: 40px;">
+    
+    <!-- Top Dashboard Navbar -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid var(--border-glass);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center;">
+                <i class="fa-solid fa-graduation-cap" style="font-size: 1.1rem; color: white;"></i>
+            </div>
+            <h1 style="font-size: 1.5rem; font-family: 'Outfit', sans-serif; color: white;">Student Dashboard</h1>
+        </div>
+        <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary" style="padding: 8px 16px; font-size: 0.85rem; border-radius: 8px; color: var(--danger);">
+            Logout <i class="fa-solid fa-right-from-bracket"></i>
+        </a>
+    </div>
+
+    <!-- Notification Toasts List -->
+    {% if notifications %}
+    <div class="notifications-list">
+        {% for note in notifications %}
+        <div class="notification-item {{ note.type }}">
+            <i class="fa-solid {% if note.type == 'warning' %}fa-circle-exclamation{% elif note.type == 'success' %}fa-circle-check{% else %}fa-circle-info{% endif %}" style="font-size: 1.25rem;"></i>
+            <span>{{ note.message }}</span>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Student Main Grid -->
+    <div class="profile-grid">
+        
+        <!-- Left: Profile details Card -->
+        <div class="glass-card profile-card" style="height: fit-content;">
+            <img src="/{{ student.photo_path }}" class="profile-avatar" onerror="this.src='/static/images/default_profile.png'">
+            <h3 style="color: white; margin-top: 8px;">{{ student.name }}</h3>
+            <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Student Profile</span>
+            
+            <div class="student-meta">
+                <div class="meta-row">
+                    <span class="meta-label">Roll Number</span>
+                    <span class="meta-value">{{ student.roll_no }}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Branch</span>
+                    <span class="meta-value">{{ student.branch }}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Section</span>
+                    <span class="meta-value">{{ student.section }}</span>
+                </div>
+                <div class="meta-row">
+                    <span class="meta-label">Semester</span>
+                    <span class="meta-value">Semester {{ student.semester }}</span>
+                </div>
+            </div>
+            
+            <a href="/reports/export/pdf/{{ student._id }}" class="btn btn-primary" style="width: 100%; border-radius: 8px; margin-top: 10px; font-size: 0.85rem;">
+                <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+            </a>
+        </div>
+
+        <!-- Right: Progress, Calendar, Logs -->
+        <div style="display: flex; flex-direction: column; gap: 32px;">
+            
+            <!-- Visual circular meter card and numerical statistics -->
+            <div class="glass-card" style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 24px; align-items: center;">
+                
+                <!-- Circular visual indicator -->
+                <div class="attendance-ring-container">
+                    <svg width="180" height="180" viewBox="0 0 180 180" style="transform: rotate(-90deg);">
+                        <!-- Background circle -->
+                        <circle cx="90" cy="90" r="70" stroke="rgba(255,255,255,0.03)" stroke-width="12" fill="none" />
+                        <!-- Progress indicator circle -->
+                        <circle class="progress-ring-circle" data-percent="{{ percentage }}" cx="90" cy="90" r="70" 
+                                stroke="url(#gradient-accent)" stroke-width="12" fill="none" stroke-linecap="round"
+                                style="transition: stroke-dashoffset 0.8s ease-out;" />
+                        
+                        <defs>
+                            <linearGradient id="gradient-accent" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="var(--primary)" />
+                                <stop offset="100%" stop-color="var(--secondary)" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <div class="attendance-percentage">
+                        <span>{{ percentage }}%</span>
+                        <span class="percentage-label">Attendance</span>
+                    </div>
+                </div>
+
+                <!-- Stats summary numbers -->
+                <div>
+                    <h3 style="color: white; margin-bottom: 12px;">Attendance Summary</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 20px;">Your overall record across all subjects and lectures conducted this semester.</p>
+                    
+                    <div style="display: flex; gap: 32px;">
+                        <div>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Attended Lectures</span>
+                            <span style="font-size: 1.75rem; font-weight: 800; color: var(--success);">{{ present_count }}</span>
+                        </div>
+                        <div>
+                            <span style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 4px;">Missed Lectures</span>
+                            <span style="font-size: 1.75rem; font-weight: 800; color: var(--danger);">{{ absent_count }}</span>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Calendar checklist card -->
+            <div class="glass-card">
+                <h3 style="color: white;">Attendance Calendar Check</h3>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 16px;">Checklist of recent lecture sessions and your presence status.</p>
+                
+                <div class="calendar-grid">
+                    {% if calendar_checklist %}
+                        {% for day in calendar_checklist %}
+                        <div class="calendar-day-card">
+                            <span class="day-name">{{ day.day }}</span>
+                            <span class="day-date">{{ day.date.split('-')[2] }}</span>
+                            
+                            {% if day.status == 'Present' %}
+                                <i class="fa-solid fa-circle-check day-status-icon present" title="Present"></i>
+                            {% else %}
+                                <i class="fa-solid fa-circle-xmark day-status-icon absent" title="Absent"></i>
+                            {% endif %}
+                            
+                            <span class="subject-badge" title="{{ day.subject }}">{{ day.subject }}</span>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 20px;">No session logs recorded this term.</div>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/student_dashboard.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}My Reports - Smart Attendance System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding-top: 40px; padding-bottom: 40px;">
+    
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid var(--border-glass);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary" style="padding: 8px 12px; border-radius: 8px;">
+                <i class="fa-solid fa-arrow-left"></i> Back
+            </a>
+            <h1 style="font-size: 1.5rem; font-family: 'Outfit', sans-serif; color: white;">Attendance Record History</h1>
+        </div>
+        
+        {% if session.student_id %}
+        <a href="/reports/export/pdf/{{ session.student_id }}" class="btn btn-primary" style="font-size: 0.85rem; border-radius: 8px;">
+            <i class="fa-solid fa-file-pdf"></i> Download PDF Report
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Attendance log records table -->
+    <div class="glass-card">
+        <div class="table-wrapper">
+            <table class="custom-table" style="font-size: 0.95rem;">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Subject / Lecture</th>
+                        <th>Date</th>
+                        <th>Time Marked</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if attendance_records %}
+                        {% for record in attendance_records %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td><b>{{ record.subject }}</b></td>
+                            <td>{{ record.date }}</td>
+                            <td>{{ record.time }}</td>
+                            <td><span class="badge badge-success">{{ record.status }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 32px;">No presence records logged for your profile yet.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

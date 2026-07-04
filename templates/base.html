@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Smart Attendance System{% endblock %}</title>
+    
+    <!-- CDNs for icons, charts and fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Base Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Toast Container for live attendance alerts -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-container" style="position: fixed; top: 24px; left: 50%; transform: translateX(-50%); z-index: 1000; width: 90%; max-width: 500px;">
+                {% for category, message in messages %}
+                    <div class="glass-card animate-fade-in" style="margin-bottom: 12px; padding: 12px 20px; border-left: 4px solid {% if category == 'danger' %}var(--danger){% elif category == 'success' %}var(--success){% else %}var(--primary){% endif %}; background: rgba(15, 23, 42, 0.9);">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.9rem; font-weight: 500;">{{ message }}</span>
+                            <button onclick="this.parentElement.parentElement.remove()" style="background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.1rem;">×</button>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Content Block -->
+    {% block content %}
+    <div class="container animate-fade-in" style="min-height: 100vh; display: flex; align-items: center; justify-content: center;">
+        <div class="glass-card" style="text-align: center; max-width: 450px;">
+            <h2>{{ error_title | default("Welcome") }}</h2>
+            <p style="color: var(--text-secondary); margin: 16px 0 24px;">{{ error_message | default("Welcome to the Smart Attendance Face Recognition portal.") }}</p>
+            <a href="/" class="btn btn-primary">Go to Home</a>
+        </div>
+    </div>
+    {% endblock %}
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

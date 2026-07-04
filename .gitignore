@@ -1,0 +1,36 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# VS Code settings
+.vscode/
+
+# Environment files
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Local face datasets and embeddings
+dataset/*
+!dataset/.gitkeep
+
+embeddings/*
+!embeddings/.gitkeep
+
+# Local logs and reports
+logs/*
+!logs/.gitkeep
+
+reports/daily/*
+!reports/daily/.gitkeep
+reports/monthly/*
+!reports/monthly/.gitkeep
+reports/pdf/*
+!reports/pdf/.gitkeep

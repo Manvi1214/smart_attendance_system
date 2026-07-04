@@ -1,0 +1,177 @@
+/* Student Profile Layout */
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 2.5fr;
+    gap: 32px;
+    margin-bottom: 32px;
+}
+
+.profile-card {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.profile-avatar {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--primary);
+    box-shadow: 0 0 20px var(--primary-glow);
+}
+
+.student-meta {
+    width: 100%;
+    margin-top: 16px;
+    border-top: 1px solid var(--border-glass);
+    padding-top: 16px;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+}
+
+.meta-label {
+    color: var(--text-secondary);
+}
+
+.meta-value {
+    color: white;
+    font-weight: 600;
+}
+
+/* Progress Ring / Attendance circular visual */
+.attendance-ring-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 180px;
+    height: 180px;
+    margin: 0 auto 20px;
+}
+
+.attendance-percentage {
+    position: absolute;
+    font-size: 2.25rem;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1;
+}
+
+.percentage-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-top: 4px;
+}
+
+/* Calendar Card styling */
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+    margin-top: 20px;
+}
+
+.calendar-day-card {
+    background: rgba(15, 23, 42, 0.4);
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    transition: var(--transition);
+}
+
+.calendar-day-card:hover {
+    transform: translateY(-2px);
+}
+
+.day-name {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.day-date {
+    font-size: 0.95rem;
+    color: white;
+    font-weight: 500;
+}
+
+.day-status-icon {
+    font-size: 1.5rem;
+    margin-top: 4px;
+}
+
+.day-status-icon.present {
+    color: var(--success);
+    text-shadow: 0 0 10px var(--success-glow);
+}
+
+.day-status-icon.absent {
+    color: var(--danger);
+    text-shadow: 0 0 10px var(--danger-glow);
+}
+
+.subject-badge {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Notifications list */
+.notifications-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+}
+
+.notification-item {
+    padding: 16px;
+    border-radius: 12px;
+    border-left: 4px solid var(--text-muted);
+    background: rgba(255, 255, 255, 0.02);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.9rem;
+}
+
+.notification-item.warning {
+    border-left-color: var(--danger);
+    background: rgba(239, 68, 68, 0.05);
+    color: #fca5a5;
+}
+
+.notification-item.success {
+    border-left-color: var(--success);
+    background: rgba(16, 185, 129, 0.05);
+    color: #a7f3d0;
+}
+
+.notification-item.info {
+    border-left-color: var(--secondary);
+    background: rgba(14, 165, 233, 0.05);
+    color: #bae6fd;
+}

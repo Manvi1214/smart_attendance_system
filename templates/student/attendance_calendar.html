@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar Check - Smart Attendance System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding-top: 40px; padding-bottom: 40px;">
+    
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 32px; padding-bottom: 16px; border-bottom: 1px solid var(--border-glass);">
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary" style="padding: 8px 12px; border-radius: 8px;">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+        <h1 style="font-size: 1.5rem; font-family: 'Outfit', sans-serif; color: white;">Attendance Calendar check</h1>
+    </div>
+
+    <!-- Monthly Visual Grid card -->
+    <div class="glass-card">
+        <h3 style="color: white; margin-bottom: 8px;">Monthly Session Tracker</h3>
+        <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 24px;">View of recent days with class sessions and attendance statuses.</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 12px; max-width: 800px; margin: 0 auto; text-align: center;">
+            <!-- Day Headers -->
+            <div style="font-weight: 600; color: var(--text-muted);">Mon</div>
+            <div style="font-weight: 600; color: var(--text-muted);">Tue</div>
+            <div style="font-weight: 600; color: var(--text-muted);">Wed</div>
+            <div style="font-weight: 600; color: var(--text-muted);">Thu</div>
+            <div style="font-weight: 600; color: var(--text-muted);">Fri</div>
+            <div style="font-weight: 600; color: var(--text-muted); color: rgba(239, 68, 68, 0.45)">Sat</div>
+            <div style="font-weight: 600; color: var(--text-muted); color: rgba(239, 68, 68, 0.45)">Sun</div>
+            
+            <!-- Generate a standard grid matrix of calendar days -->
+            {% for i in range(1, 31) %}
+            <div style="background: rgba(255,255,255,0.01); border: 1px solid var(--border-glass); border-radius: 8px; padding: 12px; min-height: 54px; display: flex; flex-direction: column; justify-content: space-between;">
+                <span style="font-size: 0.8rem; color: var(--text-secondary);">{{ i }}</span>
+                <!-- Random mock check status indicators -->
+                {% if i in [3, 8, 12, 17, 22, 26] %}
+                    <i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 0.85rem; margin-top: 4px;" title="Present"></i>
+                {% elif i in [5, 15] %}
+                    <i class="fa-solid fa-circle-xmark" style="color: var(--danger); font-size: 0.85rem; margin-top: 4px;" title="Absent"></i>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

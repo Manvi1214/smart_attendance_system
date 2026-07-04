@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block title %}Register Student - Smart Attendance System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="brand">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
+                <i class="fa-solid fa-graduation-cap" style="font-size: 1.1rem; color: white;"></i>
+            </div>
+            <span class="brand-text">Smart Attendance</span>
+        </div>
+        
+        <ul class="nav-menu">
+            <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('teacher.register_student') }}" class="nav-link active"><i class="fa-solid fa-user-plus"></i> Register Student</a></li>
+            <li><a href="{{ url_for('teacher.start_attendance') }}" class="nav-link"><i class="fa-solid fa-camera"></i> Start Attendance</a></li>
+            <li><a href="{{ url_for('teacher.attendance_history') }}" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i> Session History</a></li>
+            <li><a href="{{ url_for('teacher.reports') }}" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Reports Export</a></li>
+            <li><a href="{{ url_for('teacher.analytics') }}" class="nav-link"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
+        </ul>
+        
+        <div class="nav-logout">
+            <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Content Panel -->
+    <div class="main-panel">
+        
+        <div class="panel-header">
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Student Registry</p>
+                <h1 class="panel-title">Add New Student Profile</h1>
+            </div>
+        </div>
+
+        <div style="max-width: 680px; margin: 0 auto;">
+            
+            <!-- Registration Details Card -->
+            <div class="glass-card animate-fade-in" id="registration-fields-card">
+                <h3 style="margin-bottom: 24px; color: white;">Student Details</h3>
+                
+                <form id="student-registration-form">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                        <div class="form-group">
+                            <label class="form-label" for="reg-name">Full Name</label>
+                            <input type="text" id="reg-name" class="form-control" placeholder="e.g. Krish Gupta" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reg-roll">Roll Number / ID</label>
+                            <input type="text" id="reg-roll" class="form-control" placeholder="e.g. 101" required>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                        <div class="form-group">
+                            <label class="form-label" for="reg-branch">Branch / Department</label>
+                            <input type="text" id="reg-branch" class="form-control" placeholder="e.g. CSE, IT" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reg-section">Section</label>
+                            <input type="text" id="reg-section" class="form-control" placeholder="e.g. A" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reg-semester">Semester</label>
+                            <input type="number" id="reg-semester" class="form-control" placeholder="e.g. 4" required>
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid var(--border-glass); padding-top: 20px; margin-top: 10px;">
+                        <div class="form-group">
+                            <label class="form-label" for="reg-email">Login Email (For Student Dashboard)</label>
+                            <input type="email" id="reg-email" class="form-control" placeholder="student@school.edu" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reg-password">Login Password</label>
+                            <input type="password" id="reg-password" class="form-control" placeholder="••••••••" required>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 24px; text-align: right;">
+                        <button type="button" id="btn-start-capture" class="btn btn-primary" style="height: 46px;">
+                            Continue to Face Capture <i class="fa-solid fa-camera"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Webcam Image Capture Card (Hidden Initially) -->
+            <div class="glass-card animate-fade-in" id="registration-webcam-card" style="display: none; border-color: var(--primary);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <h3 style="color: white; margin-bottom: 6px;">Biometric Facial Enrollment</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Follow the on-screen instructions to enroll facial biometric markers.</p>
+                </div>
+                
+                <!-- On-screen Challenge Prompt -->
+                <div id="capture-direction-prompt" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 700; text-align: center; margin: 16px 0; min-height: 28px; color: var(--primary);">
+                    Align face to webcam...
+                </div>
+
+                <!-- Webcam container -->
+                <div class="webcam-container" style="max-width: 520px; margin: 0 auto 20px;">
+                    <video id="reg-webcam-video" class="webcam-feed" autoplay playsinline></video>
+                </div>
+
+                <!-- Progress fill bar -->
+                <div style="width: 100%; max-width: 520px; margin: 0 auto;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">
+                        <span id="capture-progress-text">Enrolling biometric signatures...</span>
+                    </div>
+                    <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-glass);">
+                        <div id="capture-progress-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.2s ease;"></div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/webcam.js') }}"></script>
+<script src="{{ url_for('static', filename='js/teacher_dashboard.js') }}"></script>
+{% endblock %}

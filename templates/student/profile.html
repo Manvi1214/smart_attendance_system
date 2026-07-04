@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Smart Attendance System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="container animate-fade-in" style="padding-top: 40px; padding-bottom: 40px; max-width: 600px;">
+    
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+        <a href="{{ url_for('student.dashboard') }}" class="btn btn-secondary" style="padding: 8px 12px; border-radius: 8px;">
+            <i class="fa-solid fa-arrow-left"></i> Back
+        </a>
+        <h1 style="font-size: 1.5rem; font-family: 'Outfit', sans-serif; color: white;">Student Profile details</h1>
+    </div>
+
+    <div class="glass-card" style="text-align: center; display: flex; flex-direction: column; align-items: center; gap: 20px;">
+        <img src="/{{ student.photo_path }}" class="profile-avatar" style="width: 160px; height: 160px; border-width: 4px;" onerror="this.src='/static/images/default_profile.png'">
+        
+        <div>
+            <h2 style="color: white; margin-bottom: 4px;">{{ student.name }}</h2>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;">Roll Number: {{ student.roll_no }}</p>
+        </div>
+
+        <div class="student-meta" style="border-top-color: var(--border-glass); margin-top: 10px;">
+            <div class="meta-row">
+                <span class="meta-label">Branch / Course</span>
+                <span class="meta-value">{{ student.branch }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Section</span>
+                <span class="meta-value">{{ student.section }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Academic Semester</span>
+                <span class="meta-value">Semester {{ student.semester }}</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Registration Date</span>
+                <span class="meta-value">{{ student.registered_at.strftime('%B %d, %Y') if student.registered_at else 'N/A' }}</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

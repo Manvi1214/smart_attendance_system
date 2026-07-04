@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Teacher Dashboard - Smart Attendance System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="brand">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
+                <i class="fa-solid fa-graduation-cap" style="font-size: 1.1rem; color: white;"></i>
+            </div>
+            <span class="brand-text">Smart Attendance</span>
+        </div>
+        
+        <ul class="nav-menu">
+            <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link active"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('teacher.register_student') }}" class="nav-link"><i class="fa-solid fa-user-plus"></i> Register Student</a></li>
+            <li><a href="{{ url_for('teacher.start_attendance') }}" class="nav-link"><i class="fa-solid fa-camera"></i> Start Attendance</a></li>
+            <li><a href="{{ url_for('teacher.attendance_history') }}" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i> Session History</a></li>
+            <li><a href="{{ url_for('teacher.reports') }}" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Reports Export</a></li>
+            <li><a href="{{ url_for('teacher.analytics') }}" class="nav-link"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
+        </ul>
+        
+        <div class="nav-logout">
+            <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Content Panel -->
+    <div class="main-panel">
+        
+        <div class="panel-header">
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Overview</p>
+                <h1 class="panel-title">Dashboard</h1>
+            </div>
+            <div style="font-size: 0.9rem; color: var(--text-secondary); background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); padding: 8px 16px; border-radius: 8px;">
+                <i class="fa-regular fa-calendar-days" style="margin-right: 6px;"></i> {{ stats.date | default("Today") }}
+            </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="stats-grid animate-fade-in">
+            <div class="glass-card stat-card primary">
+                <div class="stat-header">
+                    <span>Total Students</span>
+                    <i class="fa-solid fa-users" style="color: var(--primary);"></i>
+                </div>
+                <div class="stat-value" id="stat-total">{{ stats.total }}</div>
+                <div class="stat-footer">Enrolled database count</div>
+            </div>
+            <div class="glass-card stat-card success">
+                <div class="stat-header">
+                    <span>Present Today</span>
+                    <i class="fa-solid fa-circle-check" style="color: var(--success);"></i>
+                </div>
+                <div class="stat-value" id="stat-present">{{ stats.present }}</div>
+                <div class="stat-footer">{% if active_session %}Marked in current class{% else %}Marked in any class today{% endif %}</div>
+            </div>
+            <div class="glass-card stat-card danger">
+                <div class="stat-header">
+                    <span>Absent Today</span>
+                    <i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i>
+                </div>
+                <div class="stat-value" id="stat-absent">{{ stats.absent }}</div>
+                <div class="stat-footer">{% if active_session %}Missing class attendance{% else %}No attendance recorded today{% endif %}</div>
+            </div>
+            <div class="glass-card stat-card secondary">
+                <div class="stat-header">
+                    <span>Attendance Rate</span>
+                    <i class="fa-solid fa-chart-simple" style="color: var(--secondary);"></i>
+                </div>
+                <div class="stat-value" id="stat-percentage">{{ stats.percentage }}%</div>
+                <div class="stat-footer">{% if active_session %}Ratio of class attendees{% else %}Overall daily attendance rate{% endif %}</div>
+            </div>
+        </div>
+
+        <!-- Session Initialization Quick Action -->
+        <div class="glass-card animate-fade-in" style="margin-bottom: 32px; border-color: rgba(99, 102, 241, 0.2);">
+            <div class="session-grid" style="grid-template-columns: 1.5fr 1fr; align-items: center;">
+                <div>
+                    <h3 style="margin-bottom: 8px; color: white;">Start Tracking Attendance</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Start a new session to run real-time camera face matching for your subject.</p>
+                </div>
+                
+                <div>
+                    {% if active_session %}
+                    <div style="background: rgba(16, 185, 129, 0.05); border: 1.5px dashed var(--success); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; text-align: center;">
+                        <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--success); font-weight: 700;">● Active Session Running</span>
+                        <h4 style="color: white; font-family: 'Outfit', sans-serif;">{{ active_session.subject }}</h4>
+                        <a href="{{ url_for('teacher.start_attendance') }}" class="btn btn-success" style="height: 38px; font-size: 0.85rem; padding: 0 16px; border-radius: 6px; margin-top: 4px;">
+                            Go to Webcam Stream <i class="fa-solid fa-arrow-right"></i>
+                        </a>
+                    </div>
+                    {% else %}
+                    <div style="display: flex; gap: 12px;">
+                        <input type="text" id="subject-name" class="form-control" placeholder="Enter Subject Name (e.g. ML, DSA)" style="height: 48px; border-radius: 8px;">
+                        <button onclick="startSession()" class="btn btn-primary" style="height: 48px; white-space: nowrap; border-radius: 8px;">
+                            Start Session <i class="fa-solid fa-play"></i>
+                        </button>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Sessions History -->
+        <div class="glass-card animate-fade-in">
+            <h3 style="margin-bottom: 20px; color: white;">Recent Sessions</h3>
+            <div class="table-wrapper">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Present Students</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if recent_sessions %}
+                            {% for session in recent_sessions %}
+                            <tr>
+                                <td><b>{{ session.subject }}</b></td>
+                                <td>{{ session.date }}</td>
+                                <td>
+                                    {% if session.is_active %}
+                                        <span class="badge badge-warning">Active Now</span>
+                                    {% else %}
+                                        <span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-secondary);">Closed</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ session.present_count }} students</td>
+                                <td>
+                                    <div style="display: flex; gap: 8px;">
+                                        <a href="/reports/export/csv/{{ session.id_str }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
+                                            <i class="fa-solid fa-file-csv"></i> CSV
+                                        </a>
+                                        <a href="/reports/export/excel/{{ session.id_str }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
+                                            <i class="fa-solid fa-file-excel"></i> Excel
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No session logs recorded yet.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Enrolled Students Directory -->
+        <div class="glass-card animate-fade-in" style="margin-top: 32px;">
+            <h3 style="margin-bottom: 20px; color: white;">Enrolled Students Directory</h3>
+            <div class="table-wrapper">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Photo</th>
+                            <th>Roll Number</th>
+                            <th>Name</th>
+                            <th>Branch</th>
+                            <th>Section</th>
+                            <th>Semester</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if students %}
+                            {% for student in students %}
+                            <tr id="student-row-{{ student.id_str }}">
+                                <td>
+                                    <img src="/{{ student.photo_path }}" class="face-thumbnail" onerror="this.src='/static/images/default_profile.png'">
+                                </td>
+                                <td><b>{{ student.roll_no }}</b></td>
+                                <td>{{ student.name }}</td>
+                                <td>{{ student.branch }}</td>
+                                <td>{{ student.section }}</td>
+                                <td>Semester {{ student.semester }}</td>
+                                <td>
+                                    <button onclick="removeStudent('{{ student.id_str }}', '{{ student.name }}')" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
+                                        <i class="fa-solid fa-trash-can"></i> Remove
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No students registered in the database yet.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+async function startSession() {
+    const subject = document.getElementById('subject-name').value.trim();
+    if (!subject) {
+        alert("Please enter a subject name.");
+        return;
+    }
+    
+    try {
+        const response = await fetch('/teacher/api/start_session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subject: subject })
+        });
+        
+        const result = await response.json();
+        if (result.success) {
+            window.location.href = "{{ url_for('teacher.start_attendance') }}";
+        } else {
+            alert(result.message || "Failed to start session.");
+        }
+    } catch (err) {
+        console.error("Start session error:", err);
+    }
+}
+
+async function removeStudent(studentId, studentName) {
+    if (!confirm(`Are you sure you want to completely remove student ${studentName}? This will delete their registered photo, vector embedding backup, and all attendance logs.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/teacher/api/student/delete/${studentId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        const result = await response.json();
+        if (result.success) {
+            alert(result.message);
+            const row = document.getElementById(`student-row-${studentId}`);
+            if (row) row.remove();
+            location.reload();
+        } else {
+            alert(result.message || "Failed to remove student.");
+        }
+    } catch (err) {
+        console.error("Error removing student:", err);
+        alert("An error occurred while deleting the student.");
+    }
+}
+</script>
+{% endblock %}

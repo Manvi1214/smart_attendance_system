@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Start Attendance - Smart Attendance System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="brand">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
+                <i class="fa-solid fa-graduation-cap" style="font-size: 1.1rem; color: white;"></i>
+            </div>
+            <span class="brand-text">Smart Attendance</span>
+        </div>
+        
+        <ul class="nav-menu">
+            <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('teacher.register_student') }}" class="nav-link"><i class="fa-solid fa-user-plus"></i> Register Student</a></li>
+            <li><a href="{{ url_for('teacher.start_attendance') }}" class="nav-link active"><i class="fa-solid fa-camera"></i> Start Attendance</a></li>
+            <li><a href="{{ url_for('teacher.attendance_history') }}" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i> Session History</a></li>
+            <li><a href="{{ url_for('teacher.reports') }}" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Reports Export</a></li>
+            <li><a href="{{ url_for('teacher.analytics') }}" class="nav-link"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
+        </ul>
+        
+        <div class="nav-logout">
+            <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Content Panel -->
+    <div class="main-panel">
+        
+        <div class="panel-header">
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Live Processing</p>
+                <h1 class="panel-title" id="active-subject">
+                    {% if active_session %}Session: {{ active_session.subject }}{% else %}Start Class Session{% endif %}
+                </h1>
+            </div>
+        </div>
+
+        {% if active_session %}
+        <!-- Live stream layout -->
+        <div class="session-grid">
+            
+            <!-- Left: Webcam feed -->
+            <div>
+                <div class="webcam-container">
+                    <video id="webcam-video" class="webcam-feed" autoplay playsinline></video>
+                    <canvas id="canvas-overlay" class="webcam-canvas"></canvas>
+                    
+                    <!-- Liveness Check Indicators overlay -->
+                    <div class="liveness-status">
+                        <div class="status-indicator">
+                            <span id="indicator-dot" class="status-dot blink"></span>
+                            <span style="color: white; font-weight: 600;">Liveness Check</span>
+                        </div>
+                        <span id="liveness-method" style="color: var(--text-secondary); font-size: 0.75rem;">Estimating...</span>
+                        <span id="liveness-ear" style="color: var(--text-muted); font-size: 0.7rem;">Blink eye to trigger</span>
+                    </div>
+                </div>
+
+                <!-- Session controls panel -->
+                <div class="glass-card" style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; gap: 12px;">
+                        <button id="btn-start-session" class="btn btn-primary">
+                            Resume Session <i class="fa-solid fa-play"></i>
+                        </button>
+                        <button id="btn-pause-session" class="btn btn-secondary" style="display: none;">
+                            Pause Session <i class="fa-solid fa-pause"></i>
+                        </button>
+                    </div>
+                    <button id="btn-end-session" class="btn btn-danger" disabled>
+                        End Session & Save <i class="fa-solid fa-circle-stop"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right: Stats & Real-time Logs -->
+            <div style="display: flex; flex-direction: column; gap: 24px;">
+                
+                <!-- Live statistics -->
+                <div class="glass-card" style="padding: 20px; display: flex; justify-content: space-around; text-align: center;">
+                    <div>
+                        <span style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-bottom: 4px;">Present</span>
+                        <span id="stat-present" style="font-size: 1.75rem; font-weight: 800; color: var(--success);">{{ stats.present }}</span>
+                    </div>
+                    <div style="border-right: 1px solid var(--border-glass);"></div>
+                    <div>
+                        <span style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-bottom: 4px;">Absent</span>
+                        <span id="stat-absent" style="font-size: 1.75rem; font-weight: 800; color: var(--danger);">{{ stats.absent }}</span>
+                    </div>
+                    <div style="border-right: 1px solid var(--border-glass);"></div>
+                    <div>
+                        <span style="color: var(--text-secondary); font-size: 0.8rem; display: block; margin-bottom: 4px;">Rate</span>
+                        <span id="stat-percentage" style="font-size: 1.75rem; font-weight: 800; color: var(--secondary);">{{ stats.percentage }}%</span>
+                    </div>
+                </div>
+
+                <!-- Live log list -->
+                <div class="glass-card realtime-logger">
+                    <div class="logger-header">
+                        <h4 style="color: white;">Live Session Logs</h4>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">New records appear automatically</span>
+                    </div>
+                    <div class="table-wrapper">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>Face</th>
+                                    <th>Roll</th>
+                                    <th>Name</th>
+                                    <th>Time</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="realtime-logs-body">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No markings in this session yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+        
+        {% else %}
+        <!-- No active session reminder -->
+        <div class="glass-card animate-fade-in" style="text-align: center; padding: 60px 40px; border-color: rgba(239, 68, 68, 0.15);">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(239, 68, 68, 0.05); border: 1.5px solid var(--danger); margin-bottom: 20px; color: var(--danger);">
+                <i class="fa-solid fa-circle-exclamation" style="font-size: 1.5rem;"></i>
+            </div>
+            <h3 style="color: white; margin-bottom: 8px;">No Session Active</h3>
+            <p style="color: var(--text-secondary); max-width: 440px; margin: 0 auto 24px; font-size: 0.95rem;">You need to start an attendance tracking session from the main dashboard before launching the webcam analyzer.</p>
+            <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/webcam.js') }}"></script>
+<script src="{{ url_for('static', filename='js/attendance.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Session History - Smart Attendance System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    
+    <!-- Sidebar Navigation -->
+    <div class="sidebar">
+        <div class="brand">
+            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
+                <i class="fa-solid fa-graduation-cap" style="font-size: 1.1rem; color: white;"></i>
+            </div>
+            <span class="brand-text">Smart Attendance</span>
+        </div>
+        
+        <ul class="nav-menu">
+            <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('teacher.register_student') }}" class="nav-link"><i class="fa-solid fa-user-plus"></i> Register Student</a></li>
+            <li><a href="{{ url_for('teacher.start_attendance') }}" class="nav-link"><i class="fa-solid fa-camera"></i> Start Attendance</a></li>
+            <li><a href="{{ url_for('teacher.attendance_history') }}" class="nav-link active"><i class="fa-solid fa-clock-rotate-left"></i> Session History</a></li>
+            <li><a href="{{ url_for('teacher.reports') }}" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Reports Export</a></li>
+            <li><a href="{{ url_for('teacher.analytics') }}" class="nav-link"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
+        </ul>
+        
+        <div class="nav-logout">
+            <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+        </div>
+    </div>
+
+    <!-- Main Content Panel -->
+    <div class="main-panel">
+        
+        <div class="panel-header">
+            <div>
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">History</p>
+                <h1 class="panel-title">Session Log History</h1>
+            </div>
+        </div>
+
+        <div class="glass-card animate-fade-in">
+            <div class="table-wrapper">
+                <table class="custom-table">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Date</th>
+                            <th>Start Time</th>
+                            <th>End Time</th>
+                            <th>Attendees</th>
+                            <th>Rate</th>
+                            <th>Export Reports</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if history %}
+                            {% for log in history %}
+                            <tr>
+                                <td><b>{{ log.subject }}</b></td>
+                                <td>{{ log.date }}</td>
+                                <td>{{ log.start_time }}</td>
+                                <td>
+                                    {% if log.end_time == 'Active' %}
+                                        <span class="badge badge-warning">Active</span>
+                                    {% else %}
+                                        {{ log.end_time }}
+                                    {% endif %}
+                                </td>
+                                <td>{{ log.present }} / {{ log.total }}</td>
+                                <td>
+                                    <span style="font-weight: 700; color: {% if log.percentage >= 75 %}var(--success){% else %}var(--danger){% endif %};">
+                                        {{ log.percentage }}%
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 8px;">
+                                        <a href="/reports/export/csv/{{ log.id }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
+                                            <i class="fa-solid fa-file-csv"></i> CSV
+                                        </a>
+                                        <a href="/reports/export/excel/{{ log.id }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
+                                            <i class="fa-solid fa-file-excel"></i> Excel
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No session logs recorded yet.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
