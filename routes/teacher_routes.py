@@ -324,6 +324,7 @@ def api_register_complete():
 @teacher_bp.route('/teacher/api/student/delete/<student_id>', methods=['POST'])
 @login_required_teacher
 def api_delete_student(student_id):
+    # pyrefly: ignore [missing-import]
     from bson import ObjectId
     try:
         student = db.students.find_one({"_id": ObjectId(student_id)})
