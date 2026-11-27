@@ -60,18 +60,47 @@
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px;">
                         <div class="form-group">
-                            <label class="form-label" for="reg-branch">Branch / Department</label>
-                            <input type="text" id="reg-branch" class="form-control" placeholder="e.g. CSE, IT" required>
+                            <label class="form-label" for="reg-branch">Branch</label>
+                            <select id="reg-branch" class="form-control" required style="height: 44px; background: rgba(15, 23, 42, 0.7); color: white;">
+                                <option value="" disabled selected>Select Branch</option>
+                                <option value="CSE">CSE</option>
+                                <option value="IT">IT</option>
+                                <option value="ECE">ECE</option>
+                                <option value="ME">ME</option>
+                                <option value="CE">CE</option>
+                                <option value="EE">EE</option>
+                                <option value="AI">AI/ML</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="reg-section">Section</label>
-                            <input type="text" id="reg-section" class="form-control" placeholder="e.g. A" required>
+                            <select id="reg-section" class="form-control" required style="height: 44px; background: rgba(15, 23, 42, 0.7); color: white;">
+                                <option value="" disabled selected>Select Section</option>
+                                <option value="A">Section A</option>
+                                <option value="B">Section B</option>
+                                <option value="C">Section C</option>
+                                <option value="D">Section D</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label class="form-label" for="reg-semester">Semester</label>
-                            <input type="number" id="reg-semester" class="form-control" placeholder="e.g. 4" required>
+                            <select id="reg-semester" class="form-control" required style="height: 44px; background: rgba(15, 23, 42, 0.7); color: white;">
+                                <option value="" disabled selected>Select Semester</option>
+                                <option value="1">1st Semester</option>
+                                <option value="2">2nd Semester</option>
+                                <option value="3">3rd Semester</option>
+                                <option value="4">4th Semester</option>
+                                <option value="5">5th Semester</option>
+                                <option value="6">6th Semester</option>
+                                <option value="7">7th Semester</option>
+                                <option value="8">8th Semester</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reg-subject">Subject (Optional)</label>
+                            <input type="text" id="reg-subject" class="form-control" placeholder="e.g. DBMS, ML" style="height: 44px;">
                         </div>
                     </div>
 
@@ -81,8 +110,8 @@
                             <input type="email" id="reg-email" class="form-control" placeholder="student@school.edu" required>
                         </div>
                         <div class="form-group">
-                            <label class="form-label" for="reg-password">Login Password</label>
-                            <input type="password" id="reg-password" class="form-control" placeholder="••••••••" required>
+                            <label class="form-label" for="reg-phone">Phone Number</label>
+                            <input type="tel" id="reg-phone" class="form-control" placeholder="e.g. +91 9876543210" required>
                         </div>
                     </div>
 

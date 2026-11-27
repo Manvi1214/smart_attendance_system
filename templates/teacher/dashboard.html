@@ -81,54 +81,246 @@
             </div>
         </div>
 
-        <!-- Session Initialization Quick Action -->
-        <div class="glass-card animate-fade-in" style="margin-bottom: 32px; border-color: rgba(99, 102, 241, 0.2);">
-            <div class="session-grid" style="grid-template-columns: 1.5fr 1fr; align-items: center;">
+        <!-- Create Attendance Session Action -->
+        <div class="glass-card animate-fade-in" style="margin-bottom: 32px; border-color: rgba(99, 102, 241, 0.3);">
+            {% if active_session %}
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px;">
                 <div>
-                    <h3 style="margin-bottom: 8px; color: white;">Start Tracking Attendance</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Start a new session to run real-time camera face matching for your subject.</p>
-                </div>
-                
-                <div>
-                    {% if active_session %}
-                    <div style="background: rgba(16, 185, 129, 0.05); border: 1.5px dashed var(--success); padding: 16px; border-radius: 12px; display: flex; flex-direction: column; gap: 8px; text-align: center;">
-                        <span style="font-size: 0.8rem; text-transform: uppercase; color: var(--success); font-weight: 700;">● Active Session Running</span>
-                        <h4 style="color: white; font-family: 'Outfit', sans-serif;">{{ active_session.subject }}</h4>
-                        <a href="{{ url_for('teacher.start_attendance') }}" class="btn btn-success" style="height: 38px; font-size: 0.85rem; padding: 0 16px; border-radius: 6px; margin-top: 4px;">
-                            Go to Webcam Stream <i class="fa-solid fa-arrow-right"></i>
-                        </a>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                        <span class="badge badge-success" style="font-size: 0.8rem; font-weight: 700;">● Active Session Running</span>
+                        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8; font-weight: 600;">
+                            {{ active_session.branch }} - Sem {{ active_session.semester }} (Sec {{ active_session.section }})
+                        </span>
                     </div>
-                    {% else %}
-                    <div style="display: flex; gap: 12px;">
-                        <input type="text" id="subject-name" class="form-control" placeholder="Enter Subject Name (e.g. ML, DSA)" style="height: 48px; border-radius: 8px;">
-                        <button onclick="startSession()" class="btn btn-primary" style="height: 48px; white-space: nowrap; border-radius: 8px;">
-                            Start Session <i class="fa-solid fa-play"></i>
+                    <h3 style="color: white; margin: 0; font-size: 1.35rem;">{{ active_session.subject }}</h3>
+                    <p style="color: var(--text-muted); font-size: 0.82rem; margin: 4px 0 0 0;">
+                        Date: {{ active_session.date }} | Live student face matching in progress for this class roster.
+                    </p>
+                </div>
+                <div>
+                    <a href="{{ url_for('teacher.start_attendance') }}" class="btn btn-success" style="height: 44px; padding: 0 20px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-camera"></i> Go to Webcam Stream <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div>
+                <div style="margin-bottom: 16px;">
+                    <h3 style="margin: 0 0 4px 0; color: white; font-size: 1.2rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-calendar-plus" style="color: var(--primary);"></i> Create Attendance Session
+                    </h3>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">
+                        Specify Branch, Semester, Section, Subject, and Date to start face recognition for enrolled students.
+                    </p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) 1.2fr 150px auto; gap: 12px; align-items: end;">
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Branch</label>
+                        <select id="session-branch" class="form-control" style="height: 42px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                            <option value="CSE" selected>CSE</option>
+                            <option value="IT">IT</option>
+                            <option value="ECE">ECE</option>
+                            <option value="ME">ME</option>
+                            <option value="CE">CE</option>
+                            <option value="EE">EE</option>
+                            <option value="AI">AI/ML</option>
+                            {% for b in branches if b not in ['CSE', 'IT', 'ECE', 'ME', 'CE', 'EE', 'AI'] %}
+                            <option value="{{ b }}">{{ b }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Semester</label>
+                        <select id="session-semester" class="form-control" style="height: 42px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                            <option value="1">1st Semester</option>
+                            <option value="2">2nd Semester</option>
+                            <option value="3">3rd Semester</option>
+                            <option value="4">4th Semester</option>
+                            <option value="5">5th Semester</option>
+                            <option value="6" selected>6th Semester</option>
+                            <option value="7">7th Semester</option>
+                            <option value="8">8th Semester</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Section</label>
+                        <select id="session-section" class="form-control" style="height: 42px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                            <option value="A" selected>Section A</option>
+                            <option value="B">Section B</option>
+                            <option value="C">Section C</option>
+                            <option value="D">Section D</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Subject</label>
+                        <input type="text" id="session-subject" class="form-control" list="subject-suggestions" placeholder="e.g. DBMS, ML, OS" style="height: 42px; border-radius: 8px;" required>
+                        <datalist id="subject-suggestions">
+                            {% for subj in subjects %}
+                            <option value="{{ subj }}">
+                            {% endfor %}
+                        </datalist>
+                    </div>
+
+                    <div class="form-group" style="margin: 0;">
+                        <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Date</label>
+                        <input type="date" id="session-date" class="form-control" style="height: 42px; border-radius: 8px;">
+                    </div>
+
+                    <div>
+                        <button onclick="startSession()" class="btn btn-primary" style="height: 42px; white-space: nowrap; border-radius: 8px; padding: 0 20px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px;">
+                            <i class="fa-solid fa-play"></i> Create Session
                         </button>
                     </div>
-                    {% endif %}
                 </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Low Attendance / Defaulter Students Section -->
+        <div class="glass-card animate-fade-in" style="margin-bottom: 32px; border: 1.5px solid {% if defaulter_count > 0 %}rgba(239, 68, 68, 0.4){% else %}rgba(16, 185, 129, 0.3){% endif %};">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 42px; height: 42px; border-radius: 10px; background: {% if defaulter_count > 0 %}rgba(239, 68, 68, 0.15){% else %}rgba(16, 185, 129, 0.15){% endif %}; display: flex; align-items: center; justify-content: center; color: {% if defaulter_count > 0 %}var(--danger){% else %}var(--success){% endif %}; box-shadow: 0 4px 12px {% if defaulter_count > 0 %}var(--danger-glow){% else %}var(--success-glow){% endif %};">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.25rem;"></i>
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                            <h3 style="color: white; margin: 0; font-size: 1.15rem; font-weight: 700;">Low Attendance / Defaulter Students</h3>
+                            <span class="badge {% if defaulter_count > 0 %}badge-danger{% else %}badge-success{% endif %}" style="font-size: 0.8rem; font-weight: 700;">
+                                {% if defaulter_count > 0 %}
+                                    <i class="fa-solid fa-circle-exclamation"></i> {{ defaulter_count }} Defaulters (&lt; 75%)
+                                {% else %}
+                                    <i class="fa-solid fa-circle-check"></i> 0 Defaulters
+                                {% endif %}
+                            </span>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.82rem; margin: 3px 0 0 0;">
+                            Students whose attendance falls strictly below 75% across finalized sessions.
+                        </p>
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px;">
+                    {% if defaulter_count > 0 %}
+                    <button onclick="openDefaultersModal()" class="btn btn-danger" style="padding: 7px 16px; font-size: 0.82rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer;">
+                        <i class="fa-solid fa-users-viewfinder"></i> View All ({{ defaulter_count }})
+                    </button>
+                    {% endif %}
+                    <a href="{{ url_for('teacher.analytics') }}#defaulters" class="btn btn-secondary" style="padding: 7px 14px; font-size: 0.82rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-chart-line"></i> Analytics View
+                    </a>
+                </div>
+            </div>
+
+            <!-- Defaulters Table -->
+            <div class="table-wrapper">
+                <table class="custom-table" style="font-size: 0.88rem;">
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student Name</th>
+                            <th>Branch / Section</th>
+                            <th>Attended / Total</th>
+                            <th>Attendance Percentage</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if defaulters %}
+                            {% for d in defaulters[:5] %}
+                            <tr>
+                                <td><b style="color: var(--secondary);">{{ d.roll_no }}</b></td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <img src="/{{ d.photo_path }}" class="face-thumbnail" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" onerror="this.src='/static/images/default_profile.png'">
+                                        <b style="color: var(--text-primary);">{{ d.name }}</b>
+                                    </div>
+                                </td>
+                                <td><span style="color: var(--text-secondary);">{{ d.branch }} - {{ d.section }}</span></td>
+                                <td>{{ d.present_sessions }} / {{ d.total_sessions }} sessions</td>
+                                <td>
+                                    <!-- Highlighted in Red (< 75%) -->
+                                    <span style="display: inline-block; padding: 4px 12px; border-radius: 6px; font-weight: 800; font-size: 0.88rem; color: #ffffff; background: rgba(239, 68, 68, 0.28); border: 1.5px solid var(--danger); box-shadow: 0 0 12px rgba(239, 68, 68, 0.35);">
+                                        {{ d.percentage_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-danger" style="font-weight: 700;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Below 75%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if defaulter_count > 5 %}
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 12px; color: var(--text-muted); background: rgba(15, 23, 42, 0.3);">
+                                    Showing top 5 of {{ defaulter_count }} defaulter students. 
+                                    <button onclick="openDefaultersModal()" style="background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline; margin-left: 6px;">
+                                        View all {{ defaulter_count }} students &rarr;
+                                    </button>
+                                </td>
+                            </tr>
+                            {% endif %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: var(--success); padding: 24px; font-weight: 500;">
+                                    <i class="fa-solid fa-circle-check" style="margin-right: 8px;"></i> All students currently maintain 75% or higher attendance.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
             </div>
         </div>
 
         <!-- Recent Sessions History -->
         <div class="glass-card animate-fade-in">
-            <h3 style="margin-bottom: 20px; color: white;">Recent Sessions</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h3 style="margin: 0 0 4px 0; color: white;">Recent Sessions</h3>
+                    <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">Click on any session to manually view student-wise attendance records and details.</p>
+                </div>
+                <a href="{{ url_for('teacher.attendance_history') }}" class="btn btn-secondary" style="font-size: 0.82rem; padding: 6px 14px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-clock-rotate-left"></i> View Full History &rarr;
+                </a>
+            </div>
             <div class="table-wrapper">
                 <table class="custom-table">
                     <thead>
                         <tr>
                             <th>Subject</th>
+                            <th>Branch</th>
+                            <th>Sem / Sec</th>
                             <th>Date</th>
                             <th>Status</th>
-                            <th>Present Students</th>
-                            <th>Action</th>
+                            <th>Attendees</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if recent_sessions %}
                             {% for session in recent_sessions %}
                             <tr>
-                                <td><b>{{ session.subject }}</b></td>
+                                <td>
+                                    <a href="javascript:void(0)" onclick="openSessionDetailsModal('{{ session.id_str }}')" style="color: white; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#818cf8'" onmouseout="this.style.color='white'" title="Click to view full attendance sheet">
+                                        <i class="fa-solid fa-clipboard-user" style="color: var(--primary);"></i>
+                                        <span>{{ session.subject }}</span>
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 600;">
+                                        {{ session.branch or 'General' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="font-size: 0.85rem; color: var(--text-secondary);">
+                                        Sem {{ session.semester or '-' }} (Sec {{ session.section or '-' }})
+                                    </span>
+                                </td>
                                 <td>{{ session.date }}</td>
                                 <td>
                                     {% if session.is_active %}
@@ -137,13 +329,23 @@
                                         <span class="badge" style="background: rgba(255,255,255,0.05); color: var(--text-secondary);">Closed</span>
                                     {% endif %}
                                 </td>
-                                <td>{{ session.present_count }} students</td>
                                 <td>
-                                    <div style="display: flex; gap: 8px;">
-                                        <a href="/reports/export/csv/{{ session.id_str }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
+                                    <b>{{ session.present_count }}</b> / {{ session.total_count }}
+                                    {% if session.total_count > 0 %}
+                                    <span style="font-size: 0.8rem; font-weight: 700; color: {% if session.rate >= 75 %}var(--success){% else %}var(--danger){% endif %}; margin-left: 4px;">
+                                        ({{ session.rate }}%)
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                        <button type="button" class="btn btn-primary" onclick="openSessionDetailsModal('{{ session.id_str }}')" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                                            <i class="fa-solid fa-eye"></i> View Attendance
+                                        </button>
+                                        <a href="/reports/export/csv/{{ session.id_str }}" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px;" title="Download CSV">
                                             <i class="fa-solid fa-file-csv"></i> CSV
                                         </a>
-                                        <a href="/reports/export/excel/{{ session.id_str }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
+                                        <a href="/reports/export/excel/{{ session.id_str }}" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px;" title="Download Excel">
                                             <i class="fa-solid fa-file-excel"></i> Excel
                                         </a>
                                     </div>
@@ -152,7 +354,7 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No session logs recorded yet.</td>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No session logs recorded yet.</td>
                             </tr>
                         {% endif %}
                     </tbody>
@@ -160,9 +362,95 @@
             </div>
         </div>
 
-        <!-- Enrolled Students Directory -->
-        <div class="glass-card animate-fade-in" style="margin-top: 32px;">
-            <h3 style="margin-bottom: 20px; color: white;">Enrolled Students Directory</h3>
+        <!-- Enrolled Students Directory & Filters -->
+        <div class="glass-card animate-fade-in" style="margin-top: 32px;" id="students-directory-card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h3 style="margin: 0 0 4px 0; color: white;">Enrolled Students Directory</h3>
+                    <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0;">Filter and organize students by Branch, Semester, Section, or Subject.</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <a href="{{ url_for('teacher.student_management') }}" class="btn btn-secondary" style="font-size: 0.82rem; padding: 6px 14px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-users"></i> Full Student Management
+                    </a>
+                    <a href="{{ url_for('teacher.register_student') }}" class="btn btn-primary" style="font-size: 0.82rem; padding: 6px 14px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-user-plus"></i> Add Student
+                    </a>
+                </div>
+            </div>
+
+            <!-- Student Multi-Criteria Filter Bar -->
+            <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; background: rgba(15, 23, 42, 0.45); padding: 14px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05); align-items: center;">
+                <div style="min-width: 140px; flex: 1;">
+                    <label style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Branch</label>
+                    <select id="filter-branch" onchange="applyStudentFilters()" class="form-control" style="height: 36px; font-size: 0.82rem; background: rgba(15, 23, 42, 0.7); color: white;">
+                        <option value="all">All Branches</option>
+                        <option value="CSE">CSE</option>
+                        <option value="IT">IT</option>
+                        <option value="ECE">ECE</option>
+                        <option value="ME">ME</option>
+                        <option value="CE">CE</option>
+                        <option value="EE">EE</option>
+                        <option value="AI">AI/ML</option>
+                        {% for b in branches if b not in ['CSE', 'IT', 'ECE', 'ME', 'CE', 'EE', 'AI'] %}
+                        <option value="{{ b }}">{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="min-width: 130px; flex: 1;">
+                    <label style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Semester</label>
+                    <select id="filter-semester" onchange="applyStudentFilters()" class="form-control" style="height: 36px; font-size: 0.82rem; background: rgba(15, 23, 42, 0.7); color: white;">
+                        <option value="all">All Semesters</option>
+                        <option value="1">1st Semester</option>
+                        <option value="2">2nd Semester</option>
+                        <option value="3">3rd Semester</option>
+                        <option value="4">4th Semester</option>
+                        <option value="5">5th Semester</option>
+                        <option value="6">6th Semester</option>
+                        <option value="7">7th Semester</option>
+                        <option value="8">8th Semester</option>
+                    </select>
+                </div>
+
+                <div style="min-width: 120px; flex: 1;">
+                    <label style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Section</label>
+                    <select id="filter-section" onchange="applyStudentFilters()" class="form-control" style="height: 36px; font-size: 0.82rem; background: rgba(15, 23, 42, 0.7); color: white;">
+                        <option value="all">All Sections</option>
+                        <option value="A">Section A</option>
+                        <option value="B">Section B</option>
+                        <option value="C">Section C</option>
+                        <option value="D">Section D</option>
+                    </select>
+                </div>
+
+                <div style="min-width: 140px; flex: 1;">
+                    <label style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Subject</label>
+                    <select id="filter-subject" onchange="applyStudentFilters()" class="form-control" style="height: 36px; font-size: 0.82rem; background: rgba(15, 23, 42, 0.7); color: white;">
+                        <option value="all">All Subjects</option>
+                        {% for subj in subjects %}
+                        <option value="{{ subj }}">{{ subj }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div style="min-width: 160px; flex: 1.2;">
+                    <label style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Search Student</label>
+                    <input type="text" id="filter-search" oninput="applyStudentFilters()" placeholder="Search name or roll number..." class="form-control" style="height: 36px; font-size: 0.82rem;">
+                </div>
+
+                <div style="align-self: flex-end;">
+                    <button onclick="resetStudentFilters()" class="btn btn-secondary" style="height: 36px; font-size: 0.8rem; padding: 0 14px; border-radius: 6px; white-space: nowrap;">
+                        <i class="fa-solid fa-rotate-left"></i> Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- Student Directory Count Indicator -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; font-size: 0.82rem; color: var(--text-muted);">
+                <span>Showing <b id="displayed-students-count" style="color: var(--secondary);">{{ students | length }}</b> matching students</span>
+            </div>
+
             <div class="table-wrapper">
                 <table class="custom-table">
                     <thead>
@@ -173,21 +461,35 @@
                             <th>Branch</th>
                             <th>Section</th>
                             <th>Semester</th>
+                            <th>Subject</th>
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="students-table-body">
                         {% if students %}
                             {% for student in students %}
-                            <tr id="student-row-{{ student.id_str }}">
+                            <tr id="student-row-{{ student.id_str }}"
+                                class="student-directory-row"
+                                data-branch="{{ student.branch | upper }}"
+                                data-semester="{{ student.semester }}"
+                                data-section="{{ student.section | upper }}"
+                                data-subject="{{ student.subject | default('') | lower }}"
+                                data-search="{{ student.name | lower }} {{ student.roll_no | lower }}">
                                 <td>
                                     <img src="/{{ student.photo_path }}" class="face-thumbnail" onerror="this.src='/static/images/default_profile.png'">
                                 </td>
-                                <td><b>{{ student.roll_no }}</b></td>
-                                <td>{{ student.name }}</td>
-                                <td>{{ student.branch }}</td>
-                                <td>{{ student.section }}</td>
+                                <td><b style="color: var(--secondary);">{{ student.roll_no }}</b></td>
+                                <td><b style="color: var(--text-primary);">{{ student.name }}</b></td>
+                                <td><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">{{ student.branch }}</span></td>
+                                <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8;">Sec {{ student.section }}</span></td>
                                 <td>Semester {{ student.semester }}</td>
+                                <td>
+                                    {% if student.subject %}
+                                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">{{ student.subject }}</span>
+                                    {% else %}
+                                        <span style="color: var(--text-muted);">-</span>
+                                    {% endif %}
+                                </td>
                                 <td>
                                     <button onclick="removeStudent('{{ student.id_str }}', '{{ student.name }}')" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
                                         <i class="fa-solid fa-trash-can"></i> Remove
@@ -197,7 +499,7 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No students registered in the database yet.</td>
+                                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 24px;">No students registered in the database yet.</td>
                             </tr>
                         {% endif %}
                     </tbody>
@@ -207,14 +509,143 @@
 
     </div>
 </div>
+
+<!-- View All Defaulters Modal -->
+<div id="defaultersModalOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(9, 13, 22, 0.82); backdrop-filter: blur(8px); z-index: 1050; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
+    <div style="background: #0d1527; border: 1.5px solid rgba(239, 68, 68, 0.35); border-radius: 16px; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6); width: 100%; max-width: 900px; max-height: 85vh; display: flex; flex-direction: column; overflow: hidden;">
+        
+        <!-- Header -->
+        <div style="padding: 20px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.6);">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 38px; height: 38px; border-radius: 10px; background: rgba(239, 68, 68, 0.2); display: flex; align-items: center; justify-content: center; color: var(--danger);">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <h2 style="font-size: 1.25rem; font-weight: 700; color: white; margin: 0;">Defaulter Students Roster</h2>
+                        <span class="badge badge-danger">{{ defaulter_count }} Below 75%</span>
+                    </div>
+                    <p style="color: var(--text-muted); font-size: 0.82rem; margin: 3px 0 0 0;">All students failing the 75% attendance criterion across finalized sessions.</p>
+                </div>
+            </div>
+            <button onclick="closeDefaultersModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer; padding: 4px 8px; line-height: 1; border-radius: 8px;">&times;</button>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 20px 24px; overflow-y: auto; flex: 1;">
+            <div style="position: relative; margin-bottom: 16px;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                <input type="text" id="defaulterSearchInput" oninput="filterDefaultersModal()" placeholder="Search defaulter by student name or roll number..." class="custom-input" style="padding-left: 38px; width: 100%; font-size: 0.85rem; height: 38px;">
+            </div>
+
+            <div class="table-wrapper" style="max-height: 420px; overflow-y: auto;">
+                <table class="custom-table" style="font-size: 0.85rem;">
+                    <thead>
+                        <tr>
+                            <th>Roll No</th>
+                            <th>Student Name</th>
+                            <th>Branch / Sec</th>
+                            <th>Semester</th>
+                            <th>Attended / Total</th>
+                            <th>Attendance %</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="defaultersModalTableBody">
+                        {% if defaulters %}
+                            {% for d in defaulters %}
+                            <tr class="defaulter-modal-row" data-search="{{ d.name | lower }} {{ d.roll_no | lower }}">
+                                <td><b style="color: var(--secondary);">{{ d.roll_no }}</b></td>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <img src="/{{ d.photo_path }}" class="face-thumbnail" style="width: 30px; height: 30px; border-radius: 50%; object-fit: cover;" onerror="this.src='/static/images/default_profile.png'">
+                                        <b style="color: var(--text-primary);">{{ d.name }}</b>
+                                    </div>
+                                </td>
+                                <td><span style="color: var(--text-secondary);">{{ d.branch }} - {{ d.section }}</span></td>
+                                <td>Semester {{ d.semester }}</td>
+                                <td>{{ d.present_sessions }} / {{ d.total_sessions }}</td>
+                                <td>
+                                    <!-- Highlighted in Red -->
+                                    <span style="display: inline-block; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 0.82rem; color: #ffffff; background: rgba(239, 68, 68, 0.28); border: 1.5px solid var(--danger);">
+                                        {{ d.percentage_display }}
+                                    </span>
+                                </td>
+                                <td style="text-align: right;">
+                                    <a href="/reports/export/pdf/{{ d.id }}" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                                        <i class="fa-solid fa-file-pdf"></i> PDF
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--success); padding: 24px;">No defaulter students found.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="padding: 14px 24px; border-top: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.6);">
+            <span style="font-size: 0.82rem; color: var(--text-muted);">Criteria: Attendance strictly below 75% across finalized sessions.</span>
+            <div style="display: flex; gap: 10px;">
+                <a href="{{ url_for('teacher.analytics') }}#defaulters" class="btn btn-primary" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 6px;">
+                    <i class="fa-solid fa-chart-line"></i> Full Analytics View
+                </a>
+                <button onclick="closeDefaultersModal()" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 6px;">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+function openDefaultersModal() {
+    const modal = document.getElementById('defaultersModalOverlay');
+    if (modal) modal.style.display = 'flex';
+}
+
+function closeDefaultersModal() {
+    const modal = document.getElementById('defaultersModalOverlay');
+    if (modal) modal.style.display = 'none';
+}
+
+function filterDefaultersModal() {
+    const searchVal = document.getElementById('defaulterSearchInput').value.toLowerCase().trim();
+    const rows = document.querySelectorAll('.defaulter-modal-row');
+    rows.forEach(row => {
+        const text = row.getAttribute('data-search') || '';
+        row.style.display = text.includes(searchVal) ? '' : 'none';
+    });
+}
+
+// Close on Escape or click outside
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeDefaultersModal();
+});
+document.getElementById('defaultersModalOverlay').addEventListener('click', (e) => {
+    if (e.target.id === 'defaultersModalOverlay') closeDefaultersModal();
+});
 async function startSession() {
-    const subject = document.getElementById('subject-name').value.trim();
+    const branchEl = document.getElementById('session-branch');
+    const semEl = document.getElementById('session-semester');
+    const secEl = document.getElementById('session-section');
+    const subjEl = document.getElementById('session-subject') || document.getElementById('subject-name');
+    const dateEl = document.getElementById('session-date');
+
+    const branch = branchEl ? branchEl.value.trim() : 'CSE';
+    const semester = semEl ? semEl.value.trim() : '1';
+    const section = secEl ? secEl.value.trim() : 'A';
+    const subject = subjEl ? subjEl.value.trim() : '';
+    const dateVal = dateEl ? dateEl.value.trim() : '';
+
     if (!subject) {
-        alert("Please enter a subject name.");
+        alert("Please enter a subject name (e.g. DBMS, ML).");
+        if (subjEl) subjEl.focus();
         return;
     }
     
@@ -222,7 +653,13 @@ async function startSession() {
         const response = await fetch('/teacher/api/start_session', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subject: subject })
+            body: JSON.stringify({
+                branch: branch,
+                semester: semester,
+                section: section,
+                subject: subject,
+                date: dateVal
+            })
         });
         
         const result = await response.json();
@@ -233,7 +670,53 @@ async function startSession() {
         }
     } catch (err) {
         console.error("Start session error:", err);
+        alert("An error occurred while creating the session.");
     }
+}
+
+function applyStudentFilters() {
+    const branch = (document.getElementById('filter-branch') ? document.getElementById('filter-branch').value : 'all').toUpperCase();
+    const semester = (document.getElementById('filter-semester') ? document.getElementById('filter-semester').value : 'all').toLowerCase().replace(/th|st|nd|rd/g, '').trim();
+    const section = (document.getElementById('filter-section') ? document.getElementById('filter-section').value : 'all').toUpperCase();
+    const subject = (document.getElementById('filter-subject') ? document.getElementById('filter-subject').value : 'all').toLowerCase();
+    const search = (document.getElementById('filter-search') ? document.getElementById('filter-search').value : '').toLowerCase().trim();
+
+    const rows = document.querySelectorAll('.student-directory-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const rowBranch = (row.getAttribute('data-branch') || '').toUpperCase();
+        const rowSem = (row.getAttribute('data-semester') || '').toLowerCase().replace(/th|st|nd|rd/g, '').trim();
+        const rowSec = (row.getAttribute('data-section') || '').toUpperCase();
+        const rowSubj = (row.getAttribute('data-subject') || '').toLowerCase();
+        const rowSearch = (row.getAttribute('data-search') || '').toLowerCase();
+
+        let match = true;
+        if (branch !== 'ALL' && rowBranch !== branch) match = false;
+        if (semester !== 'all' && rowSem !== semester) match = false;
+        if (section !== 'ALL' && rowSec !== section) match = false;
+        if (subject !== 'all' && !rowSubj.includes(subject)) match = false;
+        if (search && !rowSearch.includes(search)) match = false;
+
+        if (match) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const countEl = document.getElementById('displayed-students-count');
+    if (countEl) countEl.textContent = visibleCount;
+}
+
+function resetStudentFilters() {
+    if (document.getElementById('filter-branch')) document.getElementById('filter-branch').value = 'all';
+    if (document.getElementById('filter-semester')) document.getElementById('filter-semester').value = 'all';
+    if (document.getElementById('filter-section')) document.getElementById('filter-section').value = 'all';
+    if (document.getElementById('filter-subject')) document.getElementById('filter-subject').value = 'all';
+    if (document.getElementById('filter-search')) document.getElementById('filter-search').value = '';
+    applyStudentFilters();
 }
 
 async function removeStudent(studentId, studentName) {
@@ -261,4 +744,7 @@ async function removeStudent(studentId, studentName) {
     }
 }
 </script>
+
+<!-- Shared Session Attendance Details & Management Modal -->
+{% include "teacher/components/session_details_modal.html" %}
 {% endblock %}

@@ -20,6 +20,7 @@
         
         <ul class="nav-menu">
             <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
+            <li><a href="{{ url_for('teacher.student_management') }}" class="nav-link"><i class="fa-solid fa-users"></i> Student Management</a></li>
             <li><a href="{{ url_for('teacher.register_student') }}" class="nav-link"><i class="fa-solid fa-user-plus"></i> Register Student</a></li>
             <li><a href="{{ url_for('teacher.start_attendance') }}" class="nav-link active"><i class="fa-solid fa-camera"></i> Start Attendance</a></li>
             <li><a href="{{ url_for('teacher.attendance_history') }}" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i> Session History</a></li>
@@ -39,9 +40,21 @@
             <div>
                 <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Live Processing</p>
                 <h1 class="panel-title" id="active-subject">
-                    {% if active_session %}Session: {{ active_session.subject }}{% else %}Start Class Session{% endif %}
+                    {% if active_session %}
+                        Session: {{ active_session.subject }}
+                        <span style="font-size: 0.95rem; font-weight: 600; color: #818cf8; margin-left: 10px; background: rgba(99, 102, 241, 0.15); padding: 4px 12px; border-radius: 6px; border: 1px solid rgba(99, 102, 241, 0.3);">
+                            {{ active_session.branch }} - Sem {{ active_session.semester }} (Sec {{ active_session.section }})
+                        </span>
+                    {% else %}
+                        Create Attendance Session
+                    {% endif %}
                 </h1>
             </div>
+            {% if active_session %}
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+                <i class="fa-regular fa-calendar" style="margin-right: 6px;"></i>Date: <b>{{ active_session.date }}</b>
+            </div>
+            {% endif %}
         </div>
 
         {% if active_session %}
@@ -55,13 +68,19 @@
                     <canvas id="canvas-overlay" class="webcam-canvas"></canvas>
                     
                     <!-- Liveness Check Indicators overlay -->
-                    <div class="liveness-status">
+                    <div class="liveness-status" id="liveness-status-box">
                         <div class="status-indicator">
-                            <span id="indicator-dot" class="status-dot blink"></span>
-                            <span style="color: white; font-weight: 600;">Liveness Check</span>
+                            <span id="indicator-dot" class="status-dot blink info"></span>
+                            <span id="liveness-status-title" style="color: white; font-weight: 600;">Detecting Face...</span>
                         </div>
-                        <span id="liveness-method" style="color: var(--text-secondary); font-size: 0.75rem;">Estimating...</span>
-                        <span id="liveness-ear" style="color: var(--text-muted); font-size: 0.7rem;">Blink eye to trigger</span>
+                        <span id="liveness-method" style="color: var(--text-secondary); font-size: 0.75rem;">AI Liveness & Anti-Spoofing</span>
+                        <span id="liveness-ear" style="color: var(--text-muted); font-size: 0.7rem;">Looking for student face...</span>
+                        
+                        <!-- Real-time Verification Step Indicators -->
+                        <div class="challenge-steps" id="challenge-steps-row">
+                            <span id="step-badge-blink" class="step-badge pending"><span class="step-num"><i class="fa-regular fa-eye"></i></span> <span class="step-label">1. Eye Blink</span></span>
+                            <span id="step-badge-pad" class="step-badge pending"><span class="step-num"><i class="fa-solid fa-shield-halved"></i></span> <span class="step-label">2. Anti-Spoofing</span></span>
+                        </div>
                     </div>
                 </div>
 
@@ -133,15 +152,160 @@
         </div>
         
         {% else %}
-        <!-- No active session reminder -->
-        <div class="glass-card animate-fade-in" style="text-align: center; padding: 60px 40px; border-color: rgba(239, 68, 68, 0.15);">
-            <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 50%; background: rgba(239, 68, 68, 0.05); border: 1.5px solid var(--danger); margin-bottom: 20px; color: var(--danger);">
-                <i class="fa-solid fa-circle-exclamation" style="font-size: 1.5rem;"></i>
+        <!-- Create Attendance Session Card when No Session is Active -->
+        <div class="glass-card animate-fade-in" style="max-width: 860px; margin: 20px auto; padding: 36px; border-color: rgba(99, 102, 241, 0.35);">
+            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 20px;">
+                <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(99, 102, 241, 0.2); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.4rem;">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                </div>
+                <div>
+                    <h2 style="color: white; margin: 0; font-size: 1.4rem; font-weight: 700;">Create Attendance Session</h2>
+                    <p style="color: var(--text-secondary); margin: 4px 0 0; font-size: 0.9rem;">
+                        Select Branch, Semester, Section, and Subject before launching live face recognition.
+                    </p>
+                </div>
             </div>
-            <h3 style="color: white; margin-bottom: 8px;">No Session Active</h3>
-            <p style="color: var(--text-secondary); max-width: 440px; margin: 0 auto 24px; font-size: 0.95rem;">You need to start an attendance tracking session from the main dashboard before launching the webcam analyzer.</p>
-            <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-primary">Go to Dashboard</a>
+
+            <!-- Error message container -->
+            <div id="session-error-alert" class="alert alert-danger" style="display: none; margin-bottom: 20px; border-radius: 8px;">
+                <i class="fa-solid fa-triangle-exclamation" style="margin-right: 8px;"></i>
+                <span id="session-error-text">No registered students found matching this criteria.</span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 20px;">
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">Branch</label>
+                    <select id="webcam-session-branch" class="form-control" style="height: 44px; background: rgba(15, 23, 42, 0.85); color: white; border-radius: 8px;">
+                        <option value="CSE" selected>CSE (Computer Science)</option>
+                        <option value="IT">IT (Information Tech)</option>
+                        <option value="ECE">ECE (Electronics)</option>
+                        <option value="ME">ME (Mechanical)</option>
+                        <option value="CE">CE (Civil)</option>
+                        <option value="EE">EE (Electrical)</option>
+                        <option value="AI">AI/ML</option>
+                        {% for b in branches if b not in ['CSE', 'IT', 'ECE', 'ME', 'CE', 'EE', 'AI'] %}
+                        <option value="{{ b }}">{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">Semester</label>
+                    <select id="webcam-session-semester" class="form-control" style="height: 44px; background: rgba(15, 23, 42, 0.85); color: white; border-radius: 8px;">
+                        <option value="1">1st Semester</option>
+                        <option value="2">2nd Semester</option>
+                        <option value="3">3rd Semester</option>
+                        <option value="4">4th Semester</option>
+                        <option value="5">5th Semester</option>
+                        <option value="6" selected>6th Semester</option>
+                        <option value="7">7th Semester</option>
+                        <option value="8">8th Semester</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">Section</label>
+                    <select id="webcam-session-section" class="form-control" style="height: 44px; background: rgba(15, 23, 42, 0.85); color: white; border-radius: 8px;">
+                        <option value="A" selected>Section A</option>
+                        <option value="B">Section B</option>
+                        <option value="C">Section C</option>
+                        <option value="D">Section D</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">Session Date</label>
+                    <input type="date" id="webcam-session-date" class="form-control" style="height: 44px; background: rgba(15, 23, 42, 0.85); color: white; border-radius: 8px;">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: end;">
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 6px;">Subject Name</label>
+                    <input type="text" id="webcam-session-subject" class="form-control" list="subject-suggestions" placeholder="e.g. DBMS, Operating Systems, Machine Learning" style="height: 44px; border-radius: 8px;" required>
+                    <datalist id="subject-suggestions">
+                        {% for s in subjects %}
+                        <option value="{{ s }}">
+                        {% endfor %}
+                    </datalist>
+                </div>
+
+                <button type="button" id="btn-create-webcam-session" class="btn btn-primary" onclick="createWebcamSession()" style="height: 44px; padding: 0 28px; border-radius: 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;">
+                    <i class="fa-solid fa-play"></i> Create & Start Session
+                </button>
+            </div>
         </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const dateInput = document.getElementById('webcam-session-date');
+            if (dateInput) {
+                const today = new Date().toISOString().split('T')[0];
+                dateInput.value = today;
+            }
+        });
+
+        async function createWebcamSession() {
+            const branch = document.getElementById('webcam-session-branch').value;
+            const semester = document.getElementById('webcam-session-semester').value;
+            const section = document.getElementById('webcam-session-section').value;
+            const subject = document.getElementById('webcam-session-subject').value.trim();
+            const dateVal = document.getElementById('webcam-session-date').value;
+            const errorAlert = document.getElementById('session-error-alert');
+            const errorText = document.getElementById('session-error-text');
+            const createBtn = document.getElementById('btn-create-webcam-session');
+
+            if (!subject) {
+                if (errorAlert) {
+                    errorText.textContent = "Please enter a subject name before starting the session.";
+                    errorAlert.style.display = "block";
+                }
+                return;
+            }
+
+            if (createBtn) {
+                createBtn.disabled = true;
+                createBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Initializing Session...';
+            }
+
+            try {
+                const response = await fetch('/teacher/api/start_session', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        subject: subject,
+                        branch: branch,
+                        semester: semester,
+                        section: section,
+                        date: dateVal
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    window.location.reload();
+                } else {
+                    if (errorAlert) {
+                        errorText.textContent = data.message || "Failed to create session.";
+                        errorAlert.style.display = "block";
+                    }
+                    if (createBtn) {
+                        createBtn.disabled = false;
+                        createBtn.innerHTML = '<i class="fa-solid fa-play"></i> Create & Start Session';
+                    }
+                }
+            } catch (err) {
+                if (errorAlert) {
+                    errorText.textContent = "Network error: " + err.message;
+                    errorAlert.style.display = "block";
+                }
+                if (createBtn) {
+                    createBtn.disabled = false;
+                    createBtn.innerHTML = '<i class="fa-solid fa-play"></i> Create & Start Session';
+                }
+            }
+        }
+        </script>
         {% endif %}
 
     </div>

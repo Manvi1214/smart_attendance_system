@@ -4,6 +4,197 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+<style>
+/* Modal Glassmorphic Styling */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(9, 13, 22, 0.78);
+    backdrop-filter: blur(8px);
+    z-index: 1050;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-dialog-card {
+    background: #0d1527;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
+    width: 100%;
+    max-width: 960px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: modalScaleIn 0.25s ease-out forwards;
+}
+
+@keyframes modalScaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.modal-card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.6);
+}
+
+.modal-card-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.modal-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.modal-close-btn:hover {
+    color: var(--danger);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+/* Modal Stats Grid */
+.modal-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.modal-stat-box {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-align: center;
+}
+
+.modal-stat-val {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 4px;
+    font-family: 'Outfit', sans-serif;
+}
+
+.modal-stat-lbl {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+/* Tabs */
+.modal-nav-tabs {
+    display: flex;
+    gap: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 20px;
+}
+
+.modal-tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-muted);
+    padding: 10px 18px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-tab-btn:hover {
+    color: var(--text-primary);
+}
+
+.modal-tab-btn.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+}
+
+/* Filter pills */
+.filter-pill {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.filter-pill:hover, .filter-pill.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Inline Edit Card */
+.inline-edit-card {
+    background: rgba(30, 41, 59, 0.75);
+    border: 1px solid rgba(99, 102, 241, 0.35);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-top: 10px;
+    animation: fadeIn 0.2s ease-in;
+}
+
+.status-choice-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 16px;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1.5px solid transparent;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    transition: var(--transition);
+}
+
+.status-choice-btn.selected-present {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: var(--success);
+    color: var(--success);
+}
+
+.status-choice-btn.selected-absent {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: var(--danger);
+    color: var(--danger);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -37,9 +228,75 @@
         
         <div class="panel-header">
             <div>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">History</p>
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">History & Records</p>
                 <h1 class="panel-title">Session Log History</h1>
             </div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="glass-card animate-fade-in" style="margin-bottom: 24px; padding: 20px;">
+            <form method="GET" action="{{ url_for('teacher.attendance_history') }}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) 160px auto auto; gap: 12px; align-items: end;">
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Branch</label>
+                    <select name="branch" class="form-control" style="height: 40px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                        <option value="all" {% if current_filters.branch == 'all' %}selected{% endif %}>All Branches</option>
+                        <option value="CSE" {% if current_filters.branch == 'CSE' %}selected{% endif %}>CSE</option>
+                        <option value="IT" {% if current_filters.branch == 'IT' %}selected{% endif %}>IT</option>
+                        <option value="ECE" {% if current_filters.branch == 'ECE' %}selected{% endif %}>ECE</option>
+                        <option value="ME" {% if current_filters.branch == 'ME' %}selected{% endif %}>ME</option>
+                        <option value="CE" {% if current_filters.branch == 'CE' %}selected{% endif %}>CE</option>
+                        <option value="EE" {% if current_filters.branch == 'EE' %}selected{% endif %}>EE</option>
+                        <option value="AI" {% if current_filters.branch == 'AI' %}selected{% endif %}>AI/ML</option>
+                        {% for b in branches if b not in ['CSE', 'IT', 'ECE', 'ME', 'CE', 'EE', 'AI'] %}
+                        <option value="{{ b }}" {% if current_filters.branch == b %}selected{% endif %}>{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Semester</label>
+                    <select name="semester" class="form-control" style="height: 40px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                        <option value="all" {% if current_filters.semester == 'all' %}selected{% endif %}>All Semesters</option>
+                        {% for s in range(1, 9) %}
+                        <option value="{{ s }}" {% if current_filters.semester == s|string or current_filters.semester == s~'th' %}selected{% endif %}>Sem {{ s }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Section</label>
+                    <select name="section" class="form-control" style="height: 40px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                        <option value="all" {% if current_filters.section == 'all' %}selected{% endif %}>All Sections</option>
+                        <option value="A" {% if current_filters.section == 'A' %}selected{% endif %}>Section A</option>
+                        <option value="B" {% if current_filters.section == 'B' %}selected{% endif %}>Section B</option>
+                        <option value="C" {% if current_filters.section == 'C' %}selected{% endif %}>Section C</option>
+                        <option value="D" {% if current_filters.section == 'D' %}selected{% endif %}>Section D</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Subject</label>
+                    <select name="subject" class="form-control" style="height: 40px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                        <option value="all" {% if current_filters.subject == 'all' %}selected{% endif %}>All Subjects</option>
+                        {% for sub in subjects %}
+                        <option value="{{ sub }}" {% if current_filters.subject == sub %}selected{% endif %}>{{ sub }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group" style="margin: 0;">
+                    <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Date</label>
+                    <input type="date" name="date" value="{{ current_filters.date or '' }}" class="form-control" style="height: 40px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="height: 40px; padding: 0 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                    <i class="fa-solid fa-filter"></i> Filter
+                </button>
+
+                <a href="{{ url_for('teacher.attendance_history') }}" class="btn btn-secondary" style="height: 40px; padding: 0 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </a>
+            </form>
         </div>
 
         <div class="glass-card animate-fade-in">
@@ -48,19 +305,37 @@
                     <thead>
                         <tr>
                             <th>Subject</th>
+                            <th>Branch</th>
+                            <th>Sem / Sec</th>
                             <th>Date</th>
                             <th>Start Time</th>
                             <th>End Time</th>
                             <th>Attendees</th>
                             <th>Rate</th>
                             <th>Export Reports</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% if history %}
                             {% for log in history %}
-                            <tr>
-                                <td><b>{{ log.subject }}</b></td>
+                            <tr id="session-row-{{ log.id }}">
+                                <td>
+                                    <a href="javascript:void(0)" onclick="openSessionDetailsModal('{{ log.id }}')" style="color: white; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#818cf8'" onmouseout="this.style.color='white'" title="Click to view full attendance sheet">
+                                        <i class="fa-solid fa-clipboard-user" style="color: var(--primary);"></i>
+                                        <span>{{ log.subject }}</span>
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 600;">
+                                        {{ log.branch or 'General' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="font-size: 0.85rem; color: var(--text-secondary);">
+                                        Sem {{ log.semester or '-' }} (Sec {{ log.section or '-' }})
+                                    </span>
+                                </td>
                                 <td>{{ log.date }}</td>
                                 <td>{{ log.start_time }}</td>
                                 <td>
@@ -70,9 +345,11 @@
                                         {{ log.end_time }}
                                     {% endif %}
                                 </td>
-                                <td>{{ log.present }} / {{ log.total }}</td>
+                                <td id="row-attendees-{{ log.id }}">
+                                    <b>{{ log.present }}</b> / {{ log.total }}
+                                </td>
                                 <td>
-                                    <span style="font-weight: 700; color: {% if log.percentage >= 75 %}var(--success){% else %}var(--danger){% endif %};">
+                                    <span id="row-rate-{{ log.id }}" style="font-weight: 700; color: {% if log.percentage >= 75 %}var(--success){% else %}var(--danger){% endif %};">
                                         {{ log.percentage }}%
                                     </span>
                                 </td>
@@ -86,11 +363,21 @@
                                         </a>
                                     </div>
                                 </td>
+                                <td>
+                                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                        <button type="button" class="btn btn-primary" onclick="openSessionDetailsModal('{{ log.id }}')" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                                            <i class="fa-solid fa-eye"></i> View Attendance
+                                        </button>
+                                        <a href="/teacher/session/{{ log.id }}/view" target="_blank" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px;" title="Open Dedicated Attendance Sheet">
+                                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                                        </a>
+                                    </div>
+                                </td>
                             </tr>
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No session logs recorded yet.</td>
+                                <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 24px;">No session logs recorded yet.</td>
                             </tr>
                         {% endif %}
                     </tbody>
@@ -100,4 +387,18 @@
 
     </div>
 </div>
+
+<!-- Shared Session Attendance Details & Management Modal -->
+{% include "teacher/components/session_details_modal.html" %}
+
+<script>
+// Handle ?edit_session=<id> in URL
+window.addEventListener('DOMContentLoaded', () => {
+    const params = new URLSearchParams(window.location.search);
+    const editSessionId = params.get('edit_session');
+    if (editSessionId) {
+        openSessionDetailsModal(editSessionId);
+    }
+});
+</script>
 {% endblock %}

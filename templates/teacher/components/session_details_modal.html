@@ -1,0 +1,534 @@
+<!-- Reusable Session Attendance Details & Management Modal -->
+<div id="sessionDetailsModalOverlay" class="modal-overlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(9, 13, 22, 0.82); backdrop-filter: blur(8px); z-index: 1050; display: none; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box;">
+    <div class="modal-dialog-card" style="background: #0d1527; border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 16px; box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6); width: 100%; max-width: 980px; max-height: 90vh; display: flex; flex-direction: column; overflow: hidden; animation: modalScaleIn 0.22s ease-out forwards;">
+        
+        <!-- Modal Header -->
+        <div class="modal-card-header" style="padding: 18px 24px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; justify-content: space-between; align-items: center; background: rgba(15, 23, 42, 0.7); flex-wrap: wrap; gap: 12px;">
+            <div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 34px; height: 34px; border-radius: 8px; background: rgba(99, 102, 241, 0.2); display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                        <i class="fa-solid fa-clipboard-user" style="font-size: 1.1rem;"></i>
+                    </div>
+                    <h2 id="modalDetailsSubject" style="font-size: 1.25rem; font-weight: 700; margin: 0; color: var(--text-primary);">Session Attendance Records</h2>
+                    <span id="modalDetailsStatusBadge" class="badge"></span>
+                </div>
+                <p id="modalDetailsMeta" style="color: var(--text-muted); font-size: 0.82rem; margin: 4px 0 0 44px;">Loading session attendance data...</p>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <a id="modalFullPageBtn" href="#" target="_blank" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; text-decoration: none;">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i> Full Page View
+                </a>
+                <a id="modalCsvBtn" href="#" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;">
+                    <i class="fa-solid fa-file-csv"></i> CSV
+                </a>
+                <a id="modalExcelBtn" href="#" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px; text-decoration: none;">
+                    <i class="fa-solid fa-file-excel"></i> Excel
+                </a>
+                <button type="button" class="modal-close-btn" onclick="closeSessionDetailsModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; line-height: 1; padding: 4px 8px; border-radius: 8px; margin-left: 6px;">&times;</button>
+            </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="modal-card-body" style="padding: 24px; overflow-y: auto; flex: 1;">
+            
+            <!-- Live Session Statistics Cards -->
+            <div class="modal-stats-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px;">
+                <div class="modal-stat-box" style="background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 14px 16px; text-align: center;">
+                    <div class="modal-stat-val" id="modalStatTotal" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; color: var(--text-primary); font-family: 'Outfit', sans-serif;">-</div>
+                    <div class="modal-stat-lbl" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Total Enrolled</div>
+                </div>
+                <div class="modal-stat-box" style="background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 14px 16px; text-align: center;">
+                    <div class="modal-stat-val" id="modalStatPresent" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; color: var(--success); font-family: 'Outfit', sans-serif;">-</div>
+                    <div class="modal-stat-lbl" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Present</div>
+                </div>
+                <div class="modal-stat-box" style="background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 14px 16px; text-align: center;">
+                    <div class="modal-stat-val" id="modalStatAbsent" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; color: var(--danger); font-family: 'Outfit', sans-serif;">-</div>
+                    <div class="modal-stat-lbl" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Absent</div>
+                </div>
+                <div class="modal-stat-box" style="background: rgba(15, 23, 42, 0.55); border: 1px solid rgba(255, 255, 255, 0.06); border-radius: 12px; padding: 14px 16px; text-align: center;">
+                    <div class="modal-stat-val" id="modalStatRate" style="font-size: 1.5rem; font-weight: 700; margin-bottom: 4px; color: var(--secondary); font-family: 'Outfit', sans-serif;">-%</div>
+                    <div class="modal-stat-lbl" style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);">Attendance Rate</div>
+                </div>
+            </div>
+
+            <!-- Tab Switcher -->
+            <div class="modal-nav-tabs" style="display: flex; gap: 8px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); margin-bottom: 20px;">
+                <button type="button" class="modal-tab-btn active" id="modalTabBtnRoster" onclick="switchSessionModalTab('roster')" style="background: transparent; border: none; border-bottom: 2px solid var(--primary); color: white; padding: 10px 18px; font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-users"></i> Student Attendance Sheet (<span id="modalRosterCount">0</span>)
+                </button>
+                <button type="button" class="modal-tab-btn" id="modalTabBtnHistory" onclick="switchSessionModalTab('history')" style="background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); padding: 10px 18px; font-size: 0.9rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Correction Audit Log (<span id="modalHistoryCount">0</span>)
+                </button>
+            </div>
+
+            <!-- Tab 1: Student Roster -->
+            <div id="modalTabContentRoster">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; flex-wrap: wrap;">
+                    <div style="position: relative; flex: 1; min-width: 240px;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+                        <input type="text" id="modalRosterSearchInput" oninput="filterSessionRoster()" placeholder="Search student name or roll number..." class="custom-input" style="padding-left: 36px; width: 100%; font-size: 0.85rem; height: 38px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: white;">
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button type="button" class="filter-pill active" id="pill-all" onclick="setSessionRosterFilter('all', this)" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: var(--primary); color: white; cursor: pointer;">All</button>
+                        <button type="button" class="filter-pill" id="pill-present" onclick="setSessionRosterFilter('Present', this)" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(15,23,42,0.6); color: var(--text-muted); cursor: pointer;">Present</button>
+                        <button type="button" class="filter-pill" id="pill-absent" onclick="setSessionRosterFilter('Absent', this)" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); background: rgba(15,23,42,0.6); color: var(--text-muted); cursor: pointer;">Absent</button>
+                    </div>
+                </div>
+
+                <div class="table-wrapper" style="max-height: 420px; overflow-y: auto;">
+                    <table class="custom-table" style="font-size: 0.85rem; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Photo</th>
+                                <th>Roll No</th>
+                                <th>Student Name</th>
+                                <th>Branch / Sec</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                                <th style="text-align: right;">Manual Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalRosterTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                    <i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Loading student attendance data...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tab 2: Correction Audit History -->
+            <div id="modalTabContentHistory" style="display: none;">
+                <div class="table-wrapper" style="max-height: 450px; overflow-y: auto;">
+                    <table class="custom-table" style="font-size: 0.85rem; width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Date & Time</th>
+                                <th>Student Name</th>
+                                <th>Roll No</th>
+                                <th>Status Change</th>
+                                <th>Reason</th>
+                                <th>Teacher</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalHistoryTableBody">
+                            <!-- Dynamic History Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+// State Management for Session Modal
+let _currModalSessionId = null;
+let _currModalStudents = [];
+let _currModalCorrections = [];
+let _currModalFilter = 'all';
+let _currEditingStudentId = null;
+
+async function openSessionDetailsModal(sessionId) {
+    _currModalSessionId = sessionId;
+    _currEditingStudentId = null;
+    _currModalFilter = 'all';
+    
+    const searchInput = document.getElementById('modalRosterSearchInput');
+    if (searchInput) searchInput.value = '';
+    
+    // Reset buttons
+    switchSessionModalTab('roster');
+    
+    // Set direct download links
+    const csvBtn = document.getElementById('modalCsvBtn');
+    if (csvBtn) csvBtn.href = `/reports/export/csv/${sessionId}`;
+    const excelBtn = document.getElementById('modalExcelBtn');
+    if (excelBtn) excelBtn.href = `/reports/export/excel/${sessionId}`;
+    const fullPageBtn = document.getElementById('modalFullPageBtn');
+    if (fullPageBtn) fullPageBtn.href = `/teacher/session/${sessionId}/view`;
+
+    // Show overlay
+    const overlay = document.getElementById('sessionDetailsModalOverlay');
+    if (overlay) overlay.style.display = 'flex';
+    
+    const tbody = document.getElementById('modalRosterTableBody');
+    if (tbody) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 36px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px; color: var(--primary);"></i> Loading attendance records...
+                </td>
+            </tr>
+        `;
+    }
+
+    try {
+        const res = await fetch(`/teacher/api/session/${sessionId}/attendance`);
+        const data = await res.json();
+        
+        if (!data.success) {
+            alert(data.message || 'Error loading session attendance');
+            return;
+        }
+
+        const s = data.session;
+        document.getElementById('modalDetailsSubject').textContent = s.subject;
+        const statusBadge = document.getElementById('modalDetailsStatusBadge');
+        if (s.is_active) {
+            statusBadge.className = 'badge badge-warning';
+            statusBadge.textContent = 'Active Session';
+        } else {
+            statusBadge.className = 'badge badge-success';
+            statusBadge.textContent = 'Completed';
+        }
+        
+        const classMeta = (s.branch || s.semester || s.section) 
+            ? `${s.branch || ''} Sem ${s.semester || ''} (Sec ${s.section || ''}) | ` 
+            : '';
+        document.getElementById('modalDetailsMeta').textContent = `Date: ${s.date} | ${classMeta}Time: ${s.start_time} - ${s.end_time}`;
+
+        // Update Stats
+        updateSessionModalStatsUI(data.stats);
+
+        // Store data
+        _currModalStudents = data.students || [];
+        _currModalCorrections = data.corrections || [];
+
+        // Render tables
+        renderSessionRosterTable();
+        renderSessionHistoryTable();
+
+    } catch (err) {
+        console.error("Session modal error:", err);
+        alert('Failed to connect to server: ' + err.message);
+    }
+}
+
+// Backward-compatible alias for attendance_history
+function openEditSessionModal(sessionId) {
+    openSessionDetailsModal(sessionId);
+}
+
+function closeSessionDetailsModal() {
+    const overlay = document.getElementById('sessionDetailsModalOverlay');
+    if (overlay) overlay.style.display = 'none';
+    _currModalSessionId = null;
+    _currEditingStudentId = null;
+}
+
+function closeEditSessionModal() {
+    closeSessionDetailsModal();
+}
+
+// Close modal on Escape key or outside click
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeSessionDetailsModal();
+});
+document.addEventListener('DOMContentLoaded', () => {
+    const overlay = document.getElementById('sessionDetailsModalOverlay');
+    if (overlay) {
+        overlay.addEventListener('click', (e) => {
+            if (e.target.id === 'sessionDetailsModalOverlay') closeSessionDetailsModal();
+        });
+    }
+});
+
+function updateSessionModalStatsUI(stats) {
+    if (!stats) return;
+    document.getElementById('modalStatTotal').textContent = stats.total ?? '-';
+    document.getElementById('modalStatPresent').textContent = stats.present ?? '-';
+    document.getElementById('modalStatAbsent').textContent = stats.absent ?? '-';
+    document.getElementById('modalStatRate').textContent = (stats.rate ?? stats.percentage ?? 0) + '%';
+    
+    // Also update row in background table if present
+    if (_currModalSessionId) {
+        const attendeesCell = document.getElementById(`row-attendees-${_currModalSessionId}`);
+        if (attendeesCell) {
+            attendeesCell.innerHTML = `<b>${stats.present}</b> / ${stats.total}`;
+        }
+        const rateSpan = document.getElementById(`row-rate-${_currModalSessionId}`);
+        if (rateSpan) {
+            const pct = stats.rate ?? stats.percentage ?? 0;
+            rateSpan.textContent = pct + '%';
+            rateSpan.style.color = pct >= 75 ? 'var(--success)' : 'var(--danger)';
+        }
+    }
+}
+
+function switchSessionModalTab(tab) {
+    const tabRoster = document.getElementById('modalTabContentRoster');
+    const tabHistory = document.getElementById('modalTabContentHistory');
+    const btnRoster = document.getElementById('modalTabBtnRoster');
+    const btnHistory = document.getElementById('modalTabBtnHistory');
+
+    if (!tabRoster || !tabHistory) return;
+
+    if (tab === 'roster') {
+        tabRoster.style.display = 'block';
+        tabHistory.style.display = 'none';
+        btnRoster.style.borderBottom = '2px solid var(--primary)';
+        btnRoster.style.color = 'white';
+        btnHistory.style.borderBottom = '2px solid transparent';
+        btnHistory.style.color = 'var(--text-muted)';
+    } else {
+        tabRoster.style.display = 'none';
+        tabHistory.style.display = 'block';
+        btnHistory.style.borderBottom = '2px solid var(--primary)';
+        btnHistory.style.color = 'white';
+        btnRoster.style.borderBottom = '2px solid transparent';
+        btnRoster.style.color = 'var(--text-muted)';
+    }
+}
+
+function filterSessionRoster() {
+    renderSessionRosterTable();
+}
+
+function setSessionRosterFilter(filter, btn) {
+    _currModalFilter = filter;
+    ['pill-all', 'pill-present', 'pill-absent'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.style.background = 'rgba(15, 23, 42, 0.6)';
+            el.style.color = 'var(--text-muted)';
+        }
+    });
+    if (btn) {
+        btn.style.background = 'var(--primary)';
+        btn.style.color = 'white';
+    }
+    renderSessionRosterTable();
+}
+
+function renderSessionRosterTable() {
+    const tbody = document.getElementById('modalRosterTableBody');
+    const searchVal = (document.getElementById('modalRosterSearchInput')?.value || '').toLowerCase().trim();
+    
+    let filtered = _currModalStudents.filter(st => {
+        const matchesFilter = (_currModalFilter === 'all') || (st.status === _currModalFilter);
+        const matchesSearch = !searchVal || 
+            st.name.toLowerCase().includes(searchVal) || 
+            st.roll_no.toLowerCase().includes(searchVal);
+        return matchesFilter && matchesSearch;
+    });
+
+    document.getElementById('modalRosterCount').textContent = filtered.length;
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 32px;">
+                    No student attendance records matching criteria.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(st => {
+        const isEditing = (st.id === _currEditingStudentId);
+        const isPresent = (st.status === 'Present');
+        
+        let pSrc = st.photo_path || '';
+        if (pSrc.startsWith('static/')) {
+            pSrc = '/' + pSrc;
+        } else if (pSrc && !pSrc.startsWith('/')) {
+            pSrc = '/static/' + pSrc;
+        }
+
+        const initial = (st.name || 'S')[0].toUpperCase();
+        const photoHtml = pSrc 
+            ? `<div style="position: relative; width: 32px; height: 32px; display: inline-block;">
+                <img src="${pSrc}" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                <div style="display: none; width: 32px; height: 32px; border-radius: 50%; background: rgba(99, 102, 241, 0.2); align-items: center; justify-content: center; font-weight: 700; color: #818cf8; font-size: 0.8rem;">${initial}</div>
+               </div>`
+            : `<div style="width: 32px; height: 32px; border-radius: 50%; background: rgba(99, 102, 241, 0.2); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #818cf8; font-size: 0.8rem;">${initial}</div>`;
+
+        const badgeHtml = isPresent
+            ? `<span class="badge badge-success" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-circle-check"></i> Present</span>`
+            : `<span class="badge badge-danger" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px;"><i class="fa-solid fa-circle-xmark"></i> Absent</span>`;
+
+        const correctedTag = st.manually_corrected 
+            ? `<span style="font-size: 0.7rem; color: #fbbf24; margin-left: 6px; background: rgba(245, 158, 11, 0.15); padding: 2px 6px; border-radius: 4px;" title="Manually modified by teacher"><i class="fa-solid fa-pen"></i> Edited</span>` 
+            : '';
+
+        if (isEditing) {
+            return `
+                <tr style="background: rgba(99, 102, 241, 0.12); border-left: 3px solid var(--primary);">
+                    <td>${photoHtml}</td>
+                    <td><b>${st.roll_no}</b></td>
+                    <td>
+                        <span style="font-weight: 600; color: white;">${st.name}</span>
+                        ${correctedTag}
+                    </td>
+                    <td><span style="color: var(--text-secondary); font-size: 0.8rem;">${st.branch} Sem ${st.semester} (${st.section})</span></td>
+                    <td colspan="3">
+                        <form onsubmit="saveAttendanceCorrection(event, '${st.id}')" style="display: flex; gap: 8px; align-items: center; justify-content: flex-end; flex-wrap: wrap;">
+                            <select id="editStatusSelect_${st.id}" class="custom-input" style="height: 32px; font-size: 0.8rem; padding: 2px 8px; width: 110px; background: #0f172a; color: white; border-radius: 6px;">
+                                <option value="Present" ${isPresent ? 'selected' : ''}>Present</option>
+                                <option value="Absent" ${!isPresent ? 'selected' : ''}>Absent</option>
+                            </select>
+                            <input type="text" id="editReasonInput_${st.id}" placeholder="Reason for correction..." required class="custom-input" style="height: 32px; font-size: 0.8rem; width: 180px; padding: 4px 10px; background: #0f172a; color: white; border-radius: 6px;">
+                            <button type="submit" class="btn btn-success" style="padding: 4px 12px; font-size: 0.8rem; height: 32px; border-radius: 6px;">Save</button>
+                            <button type="button" class="btn btn-secondary" onclick="cancelStudentEdit()" style="padding: 4px 10px; font-size: 0.8rem; height: 32px; border-radius: 6px;">Cancel</button>
+                        </form>
+                    </td>
+                </tr>
+            `;
+        }
+
+        return `
+            <tr>
+                <td>${photoHtml}</td>
+                <td><b style="color: var(--text-primary);">${st.roll_no}</b></td>
+                <td>
+                    <span style="font-weight: 600; color: white;">${st.name}</span>
+                    ${correctedTag}
+                </td>
+                <td><span style="color: var(--text-secondary); font-size: 0.8rem;">${st.branch} Sem ${st.semester} (${st.section})</span></td>
+                <td>${badgeHtml}</td>
+                <td><span style="color: var(--text-muted); font-size: 0.8rem;">${st.time || '-'}</span></td>
+                <td style="text-align: right;">
+                    <button type="button" class="btn btn-secondary" onclick="startStudentEdit('${st.id}')" style="padding: 4px 10px; font-size: 0.78rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-pen"></i> Edit
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+function startStudentEdit(studentId) {
+    _currEditingStudentId = studentId;
+    renderSessionRosterTable();
+}
+
+function cancelStudentEdit() {
+    _currEditingStudentId = null;
+    renderSessionRosterTable();
+}
+
+async function saveAttendanceCorrection(e, studentId) {
+    e.preventDefault();
+    const selectEl = document.getElementById(`editStatusSelect_${studentId}`);
+    const reasonEl = document.getElementById(`editReasonInput_${studentId}`);
+    
+    const newStatus = selectEl.value;
+    const reason = reasonEl.value.trim();
+
+    if (!reason) {
+        alert('Please provide a reason for the manual attendance correction.');
+        return;
+    }
+
+    try {
+        const response = await fetch('/teacher/api/attendance/correct', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_id: _currModalSessionId,
+                student_id: studentId,
+                new_status: newStatus,
+                status: newStatus,
+                reason: reason
+            })
+        });
+
+        let data;
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            data = await response.json();
+        } else {
+            const text = await response.text();
+            if (response.status === 401 || response.status === 403 || text.includes('/auth/login') || response.redirected) {
+                alert('Your session has expired. Please log in again.');
+                window.location.href = '/auth/login';
+                return;
+            }
+            throw new Error(`Server returned HTTP ${response.status}`);
+        }
+
+        if (data.success) {
+            // Update local student record
+            const idx = _currModalStudents.findIndex(st => st.id === studentId);
+            if (idx !== -1) {
+                _currModalStudents[idx].status = newStatus;
+                _currModalStudents[idx].manually_corrected = true;
+                _currModalStudents[idx].time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            }
+            
+            // Recompute stats
+            const presentCount = _currModalStudents.filter(st => st.status === 'Present').length;
+            const totalCount = _currModalStudents.length;
+            const newStats = {
+                total: totalCount,
+                present: presentCount,
+                absent: Math.max(0, totalCount - presentCount),
+                rate: roundValue((presentCount / totalCount * 100), 1)
+            };
+            updateSessionModalStatsUI(newStats);
+
+            // Add to correction history
+            if (data.correction) {
+                _currModalCorrections.unshift(data.correction);
+            }
+            renderSessionHistoryTable();
+
+            _currEditingStudentId = null;
+            renderSessionRosterTable();
+
+            // If on dedicated session_view page, reload to reflect new stats on full page
+            if (window.location.pathname.includes('/session/') && window.location.pathname.includes('/view')) {
+                setTimeout(() => { window.location.reload(); }, 500);
+            }
+        } else {
+            alert(data.message || 'Failed to update attendance');
+        }
+    } catch (err) {
+        console.error("Save correction error:", err);
+        alert('Server communication error: ' + err.message);
+    }
+}
+
+function renderSessionHistoryTable() {
+    const tbody = document.getElementById('modalHistoryTableBody');
+    if (!tbody) return;
+    
+    document.getElementById('modalHistoryCount').textContent = _currModalCorrections.length;
+
+    if (_currModalCorrections.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 32px;">
+                    No manual corrections recorded for this session yet.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    tbody.innerHTML = _currModalCorrections.map(c => `
+        <tr>
+            <td style="color: var(--text-muted); font-size: 0.8rem;">${c.time}</td>
+            <td><b>${c.student_name}</b></td>
+            <td>${c.student_roll}</td>
+            <td>
+                <span class="badge badge-secondary" style="font-size: 0.75rem;">${c.original_status}</span>
+                <i class="fa-solid fa-arrow-right" style="font-size: 0.7rem; margin: 0 4px; color: var(--text-muted);"></i>
+                <span class="badge ${c.updated_status === 'Present' ? 'badge-success' : 'badge-danger'}" style="font-size: 0.75rem;">${c.updated_status}</span>
+            </td>
+            <td><i style="color: var(--text-secondary); font-size: 0.8rem;">"${c.reason}"</i></td>
+            <td style="color: var(--text-muted); font-size: 0.8rem;">${c.teacher_email}</td>
+        </tr>
+    `).join('');
+}
+
+function roundValue(value, decimals) {
+    return Number(Math.round(value + 'e' + decimals) + 'e-' + decimals);
+}
+</script>

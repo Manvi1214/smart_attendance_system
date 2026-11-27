@@ -67,6 +67,9 @@ def init_indexes(database):
         database.students.create_index("roll_no", unique=True)
         # Attendance compound index to prevent duplicate daily markings per student per session
         database.attendance.create_index([("student_id", 1), ("session_id", 1), ("date", 1)], unique=True)
+        # Attendance corrections indexes
+        database.attendance_corrections.create_index([("session_id", 1), ("correction_time", -1)])
+        database.attendance_corrections.create_index([("student_id", 1), ("correction_time", -1)])
         logger.info("MongoDB database collections and indexes verified.")
     except Exception as e:
         logger.warning(f"Error creating indexes: {e}")

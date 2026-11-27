@@ -1,9 +1,100 @@
 {% extends "base.html" %}
 
-{% block title %}Analytics - Smart Attendance System{% endblock %}
+{% block title %}Analytics & Defaulters - Smart Attendance System{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+<style>
+/* Filter Controls */
+.filter-bar-card {
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+.filter-select {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid var(--border-glass);
+    color: var(--text-primary);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    outline: none;
+    transition: var(--transition);
+    cursor: pointer;
+}
+
+.filter-select:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 10px var(--primary-glow);
+}
+
+/* Distribution Chart Card */
+.chart-container-box {
+    position: relative;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Table Tabs */
+.view-mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.view-tab-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-glass);
+    color: var(--text-secondary);
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.view-tab-btn.active {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px var(--primary-glow);
+}
+
+.view-tab-btn.danger-active.active {
+    background: var(--danger);
+    color: white;
+    border-color: var(--danger);
+    box-shadow: 0 2px 8px var(--danger-glow);
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -37,43 +128,236 @@
         
         <div class="panel-header">
             <div>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Performance Data</p>
-                <h1 class="panel-title">Attendance Analytics</h1>
+                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Performance & Alerts</p>
+                <h1 class="panel-title">Attendance Analytics & Defaulters</h1>
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-secondary); background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); padding: 8px 16px; border-radius: 8px;">
+                <i class="fa-solid fa-shield-halved" style="color: var(--primary); margin-right: 6px;"></i> Criteria: <b>75% Mandatory Attendance</b>
             </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1.8fr 1fr; gap: 32px; margin-bottom: 32px;">
-            
-            <!-- Attendance Trend Graph -->
-            <div class="glass-card">
-                <h3 style="margin-bottom: 24px; color: white;">Attendance Trend Line</h3>
-                <div style="height: 300px; position: relative;">
-                    <canvas id="analytics-trend-chart"></canvas>
+        <!-- Filter Bar: Branch, Section, Semester, Subject -->
+        <div class="filter-bar-card animate-fade-in">
+            <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center;">
+                <span style="color: white; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-filter" style="color: var(--primary);"></i> Filters:
+                </span>
+
+                <!-- Branch Filter -->
+                <div class="filter-group">
+                    <span class="filter-label">Branch:</span>
+                    <select id="filterBranch" class="filter-select" onchange="applyFilters()">
+                        <option value="all" {% if current_filters.branch == 'all' %}selected{% endif %}>All Branches</option>
+                        {% for b in filter_options.branches %}
+                        <option value="{{ b }}" {% if current_filters.branch == b %}selected{% endif %}>{{ b }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Section Filter -->
+                <div class="filter-group">
+                    <span class="filter-label">Section:</span>
+                    <select id="filterSection" class="filter-select" onchange="applyFilters()">
+                        <option value="all" {% if current_filters.section == 'all' %}selected{% endif %}>All Sections</option>
+                        {% for sec in filter_options.sections %}
+                        <option value="{{ sec }}" {% if current_filters.section == sec %}selected{% endif %}>Section {{ sec }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Semester Filter -->
+                <div class="filter-group">
+                    <span class="filter-label">Semester:</span>
+                    <select id="filterSemester" class="filter-select" onchange="applyFilters()">
+                        <option value="all" {% if current_filters.semester == 'all' %}selected{% endif %}>All Semesters</option>
+                        {% for sem in filter_options.semesters %}
+                        <option value="{{ sem }}" {% if current_filters.semester == sem %}selected{% endif %}>Sem {{ sem }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Subject Filter -->
+                <div class="filter-group">
+                    <span class="filter-label">Subject:</span>
+                    <select id="filterSubject" class="filter-select" onchange="applyFilters()">
+                        <option value="all" {% if current_filters.subject == 'all' %}selected{% endif %}>All Subjects</option>
+                        {% for subj in filter_options.subjects %}
+                        <option value="{{ subj }}" {% if current_filters.subject == subj %}selected{% endif %}>{{ subj }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
             </div>
 
-            <!-- Subject-wise Attendance statistics cards -->
-            <div class="glass-card" style="display: flex; flex-direction: column; gap: 20px;">
-                <h3 style="color: white; margin-bottom: 10px;">Subject Stats</h3>
+            <div>
+                <button onclick="resetFilters()" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 6px;">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Metric KPI Cards -->
+        <div class="stats-grid animate-fade-in" style="margin-bottom: 28px;">
+            <div class="glass-card stat-card primary">
+                <div class="stat-header">
+                    <span>Total Students</span>
+                    <i class="fa-solid fa-users" style="color: var(--primary);"></i>
+                </div>
+                <div class="stat-value" id="kpi-total">{{ total_students_count }}</div>
+                <div class="stat-footer">Students matching filter</div>
+            </div>
+
+            <div class="glass-card stat-card danger">
+                <div class="stat-header">
+                    <span>Defaulter Students</span>
+                    <i class="fa-solid fa-triangle-exclamation" style="color: var(--danger);"></i>
+                </div>
+                <div class="stat-value" id="kpi-defaulters" style="color: var(--danger);">{{ defaulter_count }}</div>
+                <div class="stat-footer">Attendance strictly &lt; 75%</div>
+            </div>
+
+            <div class="glass-card stat-card secondary">
+                <div class="stat-header">
+                    <span>Defaulter Ratio</span>
+                    <i class="fa-solid fa-percent" style="color: var(--secondary);"></i>
+                </div>
+                <div class="stat-value" id="kpi-ratio">{{ defaulter_percentage }}%</div>
+                <div class="stat-footer">Percentage of enrolled cohort</div>
+            </div>
+
+            <div class="glass-card stat-card success">
+                <div class="stat-header">
+                    <span>Eligible Students</span>
+                    <i class="fa-solid fa-circle-check" style="color: var(--success);"></i>
+                </div>
+                <div class="stat-value" id="kpi-eligible">{{ total_students_count - defaulter_count }}</div>
+                <div class="stat-footer">Attendance &ge; 75% (Satisfactory)</div>
+            </div>
+        </div>
+
+        <!-- 2-Column Analytics Visualizations -->
+        <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; margin-bottom: 32px;">
+            
+            <!-- Attendance Distribution Chart -->
+            <div class="glass-card animate-fade-in">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="color: white; margin: 0; font-size: 1.05rem;">
+                        <i class="fa-solid fa-chart-pie" style="color: var(--primary); margin-right: 8px;"></i> Attendance Distribution
+                    </h3>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">By Bracket</span>
+                </div>
+                <div class="chart-container-box">
+                    <canvas id="attendance-distribution-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- Subject-wise Low Attendance Analysis -->
+            <div class="glass-card animate-fade-in" style="display: flex; flex-direction: column;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                    <h3 style="color: white; margin: 0; font-size: 1.05rem;">
+                        <i class="fa-solid fa-book-open-reader" style="color: var(--secondary); margin-right: 8px;"></i> Subject-wise Low Attendance Analysis
+                    </h3>
+                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Sorted by Lowest</span>
+                </div>
                 
-                <div style="overflow-y: auto; max-height: 280px; display: flex; flex-direction: column; gap: 16px;">
-                    {% if subject_stats %}
-                        {% for sub in subject_stats %}
-                        <div>
-                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 6px;">
-                                <span style="font-weight: 600; color: white;">{{ sub.subject }} ({{ sub.classes }} classes)</span>
-                                <span style="font-weight: 700; color: var(--secondary);">{{ sub.percentage }}%</span>
+                <div id="subjectAnalysisContainer" style="overflow-y: auto; max-height: 280px; display: flex; flex-direction: column; gap: 14px; padding-right: 4px;">
+                    {% if subject_analysis %}
+                        {% for sub in subject_analysis %}
+                        <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--border-glass); border-radius: 8px; padding: 12px 14px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                <div>
+                                    <b style="color: white; font-size: 0.9rem;">{{ sub.subject }}</b>
+                                    <span style="color: var(--text-muted); font-size: 0.78rem; margin-left: 6px;">({{ sub.classes }} finalized classes)</span>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    {% if sub.is_low %}
+                                    <span class="badge badge-danger" style="font-size: 0.72rem; padding: 2px 8px;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Low Attendance
+                                    </span>
+                                    {% else %}
+                                    <span class="badge badge-success" style="font-size: 0.72rem; padding: 2px 8px;">Good</span>
+                                    {% endif %}
+                                    <b style="color: {% if sub.average_percentage < 75 %}var(--danger){% else %}var(--success){% endif %}; font-size: 0.9rem;">
+                                        {{ sub.average_percentage }}%
+                                    </b>
+                                </div>
                             </div>
-                            <!-- progress bar -->
-                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.03); border-radius: 3px; overflow: hidden; border: 1px solid var(--border-glass);">
-                                <div style="width: {{ sub.percentage }}%; height: 100%; background: var(--secondary); border-radius: 3px;"></div>
+
+                            <!-- Progress Bar -->
+                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 6px;">
+                                <div style="width: {{ sub.average_percentage }}%; height: 100%; background: {% if sub.average_percentage < 75 %}var(--danger){% else %}var(--success){% endif %}; border-radius: 3px;"></div>
+                            </div>
+
+                            <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                                <span>Defaulters in subject: <b style="color: {% if sub.defaulters_count > 0 %}var(--danger){% else %}var(--text-secondary){% endif %};">{{ sub.defaulters_count }}</b> students</span>
+                                <span>Enrolled: {{ sub.total_enrolled }}</span>
                             </div>
                         </div>
                         {% endfor %}
                     {% else %}
-                        <div style="text-align: center; color: var(--text-muted); padding: 32px 0;">No active subject data found yet.</div>
+                        <div style="text-align: center; color: var(--text-muted); padding: 32px 0;">No finalized subjects found.</div>
                     {% endif %}
                 </div>
+            </div>
+
+        </div>
+
+        <!-- Defaulter Students Section -->
+        <div id="defaulters" class="glass-card animate-fade-in" style="border: 1.5px solid {% if defaulter_count > 0 %}rgba(239, 68, 68, 0.4){% else %}rgba(16, 185, 129, 0.3){% endif %};">
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(239, 68, 68, 0.15); display: flex; align-items: center; justify-content: center; color: var(--danger); box-shadow: 0 4px 12px var(--danger-glow);">
+                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.15rem;"></i>
+                    </div>
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <h3 style="color: white; margin: 0; font-size: 1.15rem; font-weight: 700;">Defaulter Students Section</h3>
+                            <span class="badge badge-danger" id="badgeDefaulterCount" style="font-weight: 700;">{{ defaulter_count }} Defaulters (&lt; 75%)</span>
+                        </div>
+                        <p style="color: var(--text-muted); font-size: 0.82rem; margin: 2px 0 0 0;">
+                            Student-wise attendance percentage breakdown across applicable finalized sessions.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- View Mode Tabs (Defaulters Only vs All Students) -->
+                <div class="view-mode-tabs" style="margin-bottom: 0;">
+                    <button class="view-tab-btn danger-active active" id="tabDefaultersOnly" onclick="setViewMode('defaulters')">
+                        <i class="fa-solid fa-triangle-exclamation"></i> Defaulters Only (<span id="defaulterTabCount">{{ defaulter_count }}</span>)
+                    </button>
+                    <button class="view-tab-btn" id="tabAllStudents" onclick="setViewMode('all')">
+                        <i class="fa-solid fa-users"></i> All Students (<span id="allTabCount">{{ total_students_count }}</span>)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search input -->
+            <div style="position: relative; margin-bottom: 16px;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
+                <input type="text" id="studentSearchInput" oninput="filterStudentTable()" placeholder="Search by student name or roll number..." class="custom-input" style="padding-left: 38px; width: 100%; font-size: 0.85rem; height: 38px;">
+            </div>
+
+            <!-- Students Attendance Table -->
+            <div class="table-wrapper">
+                <table class="custom-table" style="font-size: 0.88rem;">
+                    <thead>
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student Name</th>
+                            <th>Branch / Section</th>
+                            <th>Semester</th>
+                            <th>Applicable Sessions</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                            <th>Attendance %</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody">
+                        <!-- Populated dynamically via renderStudentsTable() -->
+                    </tbody>
+                </table>
             </div>
 
         </div>
@@ -83,5 +367,265 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='js/teacher_dashboard.js') }}"></script>
+<script>
+// State
+let allStudentsData = {{ students | tojson }};
+let defaultersData = {{ defaulters | tojson }};
+let distributionData = {{ distribution | tojson }};
+let currentViewMode = 'defaulters';
+let distributionChart = null;
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    initDistributionChart();
+    renderStudentsTable();
+});
+
+// Initialize Chart.js Attendance Distribution Chart
+function initDistributionChart() {
+    const canvas = document.getElementById('attendance-distribution-chart');
+    if (!canvas || typeof Chart === 'undefined') return;
+
+    const ctx = canvas.getContext('2d');
+    if (distributionChart) distributionChart.destroy();
+
+    distributionChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: distributionData.labels,
+            datasets: [{
+                data: distributionData.counts,
+                backgroundColor: distributionData.colors,
+                borderColor: '#0f172a',
+                borderWidth: 2,
+                hoverOffset: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: {
+                        color: '#94a3b8',
+                        font: { size: 11, family: 'Inter' },
+                        boxWidth: 14,
+                        padding: 12
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const count = context.raw || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                            return ` ${context.label}: ${count} students (${pct}%)`;
+                        }
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+}
+
+// Switch between "Defaulters Only" and "All Students"
+function setViewMode(mode) {
+    currentViewMode = mode;
+    const btnDef = document.getElementById('tabDefaultersOnly');
+    const btnAll = document.getElementById('tabAllStudents');
+
+    if (mode === 'defaulters') {
+        btnDef.classList.add('active');
+        btnAll.classList.remove('active');
+    } else {
+        btnAll.classList.add('active');
+        btnDef.classList.remove('active');
+    }
+    renderStudentsTable();
+}
+
+// Render Students Table with Highlighted Percentages
+function renderStudentsTable() {
+    const tbody = document.getElementById('studentTableBody');
+    const searchVal = document.getElementById('studentSearchInput').value.toLowerCase().trim();
+    const sourceData = currentViewMode === 'defaulters' ? defaultersData : allStudentsData;
+
+    const filtered = sourceData.filter(s => {
+        return s.name.toLowerCase().includes(searchVal) || 
+               s.roll_no.toLowerCase().includes(searchVal);
+    });
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                    ${currentViewMode === 'defaulters' ? '<i class="fa-solid fa-circle-check" style="color: var(--success); margin-right: 6px;"></i> No defaulter students in this selection.' : 'No students found.'}
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    let html = '';
+    filtered.forEach(s => {
+        const isDefaulter = s.is_defaulter;
+        const pct = s.percentage;
+        const pctDisplay = s.percentage_display;
+
+        // Highlight in red if below 75%; green if >= 75%; gray if N/A
+        let pctStyle = '';
+        if (pct === null) {
+            pctStyle = 'background: rgba(100, 116, 139, 0.2); border: 1px solid var(--text-muted); color: var(--text-muted);';
+        } else if (pct < 75.0) {
+            pctStyle = 'background: rgba(239, 68, 68, 0.28); border: 1.5px solid var(--danger); color: #ffffff; box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);';
+        } else {
+            pctStyle = 'background: rgba(16, 185, 129, 0.2); border: 1px solid var(--success); color: var(--success);';
+        }
+
+        let statusBadge = '';
+        if (pct === null) {
+            statusBadge = '<span class="badge" style="background: rgba(255,255,255,0.06); color: var(--text-muted);">N/A</span>';
+        } else if (isDefaulter) {
+            statusBadge = '<span class="badge badge-danger" style="font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> Defaulter (&lt; 75%)</span>';
+        } else {
+            statusBadge = '<span class="badge badge-success" style="font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Eligible (&ge; 75%)</span>';
+        }
+
+        html += `
+            <tr>
+                <td><b style="color: var(--secondary);">${s.roll_no}</b></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <img src="/${s.photo_path}" class="face-thumbnail" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" onerror="this.src='/static/images/default_profile.png'">
+                        <b style="color: var(--text-primary);">${s.name}</b>
+                    </div>
+                </td>
+                <td><span style="color: var(--text-secondary);">${s.branch} - ${s.section}</span></td>
+                <td>Semester ${s.semester}</td>
+                <td>${s.total_sessions}</td>
+                <td><b style="color: var(--success);">${s.present_sessions}</b></td>
+                <td><b style="color: var(--danger);">${s.absent_sessions}</b></td>
+                <td>
+                    <!-- Highlighted Attendance Percentage -->
+                    <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.85rem; ${pctStyle}">
+                        ${pctDisplay}
+                    </span>
+                </td>
+                <td>${statusBadge}</td>
+                <td style="text-align: right;">
+                    <a href="/reports/export/pdf/${s.id}" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                        <i class="fa-solid fa-file-pdf"></i> Report
+                    </a>
+                </td>
+            </tr>
+        `;
+    });
+
+    tbody.innerHTML = html;
+}
+
+// Filter table live as teacher types
+function filterStudentTable() {
+    renderStudentsTable();
+}
+
+// Apply Filters (Branch, Section, Semester, Subject) via AJAX
+async function applyFilters() {
+    const branch = document.getElementById('filterBranch').value;
+    const section = document.getElementById('filterSection').value;
+    const semester = document.getElementById('filterSemester').value;
+    const subject = document.getElementById('filterSubject').value;
+
+    const query = new URLSearchParams({
+        branch: branch,
+        section: section,
+        semester: semester,
+        subject: subject
+    });
+
+    try {
+        const res = await fetch(`/teacher/api/analytics/defaulters?${query.toString()}`);
+        const result = await res.json();
+        if (!result.success) return;
+
+        const d = result.data;
+        allStudentsData = d.students;
+        defaultersData = d.defaulters;
+        distributionData = result.distribution;
+
+        // Update KPI counters
+        document.getElementById('kpi-total').textContent = d.total_students;
+        document.getElementById('kpi-defaulters').textContent = d.defaulter_count;
+        document.getElementById('kpi-ratio').textContent = d.defaulter_percentage + '%';
+        document.getElementById('kpi-eligible').textContent = d.total_students - d.defaulter_count;
+
+        document.getElementById('badgeDefaulterCount').textContent = `${d.defaulter_count} Defaulters (< 75%)`;
+        document.getElementById('defaulterTabCount').textContent = d.defaulter_count;
+        document.getElementById('allTabCount').textContent = d.total_students;
+
+        // Update charts & tables
+        initDistributionChart();
+        renderStudentsTable();
+        renderSubjectAnalysis(result.subject_analysis);
+
+    } catch (err) {
+        console.error("Filter apply error:", err);
+    }
+}
+
+// Reset Filters
+function resetFilters() {
+    document.getElementById('filterBranch').value = 'all';
+    document.getElementById('filterSection').value = 'all';
+    document.getElementById('filterSemester').value = 'all';
+    document.getElementById('filterSubject').value = 'all';
+    applyFilters();
+}
+
+// Render Subject Analysis Container
+function renderSubjectAnalysis(analysisList) {
+    const container = document.getElementById('subjectAnalysisContainer');
+    if (!analysisList || analysisList.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 32px 0;">No finalized subjects found.</div>';
+        return;
+    }
+
+    let html = '';
+    analysisList.forEach(sub => {
+        const isLow = sub.is_low;
+        const color = sub.average_percentage < 75 ? 'var(--danger)' : 'var(--success)';
+        const badge = isLow ? 
+            '<span class="badge badge-danger" style="font-size: 0.72rem; padding: 2px 8px;"><i class="fa-solid fa-triangle-exclamation"></i> Low Attendance</span>' :
+            '<span class="badge badge-success" style="font-size: 0.72rem; padding: 2px 8px;">Good</span>';
+
+        html += `
+            <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--border-glass); border-radius: 8px; padding: 12px 14px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                    <div>
+                        <b style="color: white; font-size: 0.9rem;">${sub.subject}</b>
+                        <span style="color: var(--text-muted); font-size: 0.78rem; margin-left: 6px;">(${sub.classes} finalized classes)</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        ${badge}
+                        <b style="color: ${color}; font-size: 0.9rem;">${sub.average_percentage}%</b>
+                    </div>
+                </div>
+
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 6px;">
+                    <div style="width: ${sub.average_percentage}%; height: 100%; background: ${color}; border-radius: 3px;"></div>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
+                    <span>Defaulters in subject: <b style="color: ${sub.defaulters_count > 0 ? 'var(--danger)' : 'var(--text-secondary)'};">${sub.defaulters_count}</b> students</span>
+                    <span>Enrolled: ${sub.total_enrolled}</span>
+                </div>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+}
+</script>
 {% endblock %}

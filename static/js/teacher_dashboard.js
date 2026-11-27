@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function validateRegistrationForm() {
-    const fields = ['reg-roll', 'reg-name', 'reg-branch', 'reg-section', 'reg-semester', 'reg-email', 'reg-password'];
+    const fields = ['reg-roll', 'reg-name', 'reg-branch', 'reg-section', 'reg-semester', 'reg-email', 'reg-phone'];
     for (let f of fields) {
         const el = document.getElementById(f);
         if (!el || !el.value.trim()) {
@@ -49,8 +49,10 @@ async function initiateRegistration() {
     const branch = document.getElementById('reg-branch').value.trim();
     const section = document.getElementById('reg-section').value.trim();
     const semester = document.getElementById('reg-semester').value.trim();
+    const subjectEl = document.getElementById('reg-subject');
+    const subject = subjectEl ? subjectEl.value.trim() : "";
     const email = document.getElementById('reg-email').value.trim();
-    const password = document.getElementById('reg-password').value.trim();
+    const phone = document.getElementById('reg-phone').value.trim();
 
     startCaptureBtn.disabled = true;
     startCaptureBtn.textContent = "Processing Details...";
@@ -65,8 +67,9 @@ async function initiateRegistration() {
                 branch: branch,
                 section: section,
                 semester: semester,
+                subject: subject,
                 email: email,
-                password: password
+                phone: phone
             })
         });
 

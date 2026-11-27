@@ -1,9 +1,14 @@
 #!/bin/bash
 # Smart Attendance Application run script
-# This script launches the application using the verified conda environment python path.
 
 echo "Starting Smart Attendance System Server..."
-echo "Using environment interpreter: /opt/anaconda3/envs/antigravity_dl/bin/python"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PYTHON_EXEC="$SCRIPT_DIR/.venv/bin/python"
 
-# Run Flask server
-/opt/anaconda3/envs/antigravity_dl/bin/python app.py
+if [ ! -f "$PYTHON_EXEC" ]; then
+    PYTHON_EXEC="python3"
+fi
+
+echo "Using Python: $PYTHON_EXEC"
+"$PYTHON_EXEC" "$SCRIPT_DIR/app.py"
+

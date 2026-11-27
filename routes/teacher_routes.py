@@ -4,14 +4,17 @@ import base64
 import cv2
 import numpy as np
 import datetime
+from bson import ObjectId
 from flask import Blueprint, render_template, request, jsonify, session, redirect, url_for, flash
-from database.models import StudentModel, SessionModel, AttendanceModel, UserModel
+from database.models import StudentModel, SessionModel, AttendanceModel, UserModel, AttendanceCorrectionModel
 from database.db_init import db
 from config import Config
 from services.face_detection.mtcnn_detector import detect_faces
 from services.face_alignment.align_face import align_face
 from services.face_recognition.embedding_generator import generate_embedding
+from services.face_recognition.compare_embeddings import invalidate_student_cache
 from services.attendance.session_manager import SessionManager
+from services.attendance.defaulter_service import DefaulterService
 
 teacher_bp = Blueprint('teacher', __name__, template_folder='../templates')
 
@@ -36,23 +39,51 @@ def dashboard():
     stats = SessionManager.get_session_stats()
     
     # Get recent sessions
-    all_sessions = SessionModel.get_all()[:5]
+    all_sessions = SessionModel.get_all()[:6]
     for s in all_sessions:
         s['id_str'] = str(s['_id'])
-        # count attendance
         s['present_count'] = db.attendance.count_documents({"session_id": s["_id"], "status": "Present"})
+        
+        roster_q = {}
+        if s.get("branch") and s["branch"] not in ["All", "General"]:
+            roster_q["branch"] = {"$regex": f"^{s['branch'].strip()}$", "$options": "i"}
+        if s.get("section") and s["section"] not in ["All", "General"]:
+            roster_q["section"] = {"$regex": f"^{s['section'].strip()}$", "$options": "i"}
+        if s.get("semester") and s["semester"] not in ["All", "General"]:
+            sem_c = str(s["semester"]).strip().lower().replace("th", "").replace("st", "").replace("nd", "").replace("rd", "")
+            roster_q["semester"] = {"$regex": f"^{sem_c}(th|st|nd|rd)?$", "$options": "i"}
+            
+        total = db.students.count_documents(roster_q) if roster_q else db.students.count_documents({})
+        s['total_count'] = total
+        s['rate'] = round((s['present_count'] / total * 100) if total > 0 else 0, 1)
     
     # Fetch all registered students
     students = StudentModel.get_all()
     for student in students:
         student['id_str'] = str(student['_id'])
         
+    # Low Attendance / Defaulter Students summary
+    defaulter_data = DefaulterService.calculate_student_attendance()
+    
+    # Filter options
+    branches = sorted([b for b in db.students.distinct("branch") if b])
+    sections = sorted([sec for sec in db.students.distinct("section") if sec])
+    semesters = sorted([str(sem) for sem in db.students.distinct("semester") if sem])
+    subjects = sorted([subj for subj in db.sessions.distinct("subject") if subj])
+        
     return render_template(
         'teacher/dashboard.html', 
         active_session=active_session, 
         stats=stats,
         recent_sessions=all_sessions,
-        students=students
+        students=students,
+        defaulters=defaulter_data["defaulters"],
+        defaulter_count=defaulter_data["defaulter_count"],
+        total_students_count=defaulter_data["total_students"],
+        branches=branches,
+        sections=sections,
+        semesters=semesters,
+        subjects=subjects
     )
 
 @teacher_bp.route('/teacher/register_student')
@@ -65,27 +96,85 @@ def register_student():
 def start_attendance():
     active_session = SessionModel.get_active()
     stats = SessionManager.get_session_stats()
-    return render_template('teacher/start_attendance.html', active_session=active_session, stats=stats)
+    branches = sorted([b for b in db.students.distinct("branch") if b])
+    sections = sorted([sec for sec in db.students.distinct("section") if sec])
+    semesters = sorted([str(sem) for sem in db.students.distinct("semester") if sem])
+    subjects = sorted([subj for subj in db.sessions.distinct("subject") if subj])
+    return render_template(
+        'teacher/start_attendance.html',
+        active_session=active_session,
+        stats=stats,
+        branches=branches,
+        sections=sections,
+        semesters=semesters,
+        subjects=subjects
+    )
 
 @teacher_bp.route('/teacher/attendance_history')
 @login_required_teacher
 def attendance_history():
-    sessions_list = SessionModel.get_all()
+    branch = request.args.get('branch', 'all')
+    section = request.args.get('section', 'all')
+    semester = request.args.get('semester', 'all')
+    subject = request.args.get('subject', 'all')
+    date_val = request.args.get('date', '').strip()
+
+    sessions_list = SessionModel.get_filtered(
+        branch=branch,
+        semester=semester,
+        section=section,
+        subject=subject,
+        date=date_val
+    )
     history = []
     for s in sessions_list:
         present = db.attendance.count_documents({"session_id": s["_id"], "status": "Present"})
-        total = db.students.count_documents({})
+        
+        # Calculate total students belonging specifically to this session's branch, sem, sec
+        roster_q = {}
+        if s.get("branch") and s["branch"] not in ["All", "General"]:
+            roster_q["branch"] = {"$regex": f"^{s['branch'].strip()}$", "$options": "i"}
+        if s.get("section") and s["section"] not in ["All", "General"]:
+            roster_q["section"] = {"$regex": f"^{s['section'].strip()}$", "$options": "i"}
+        if s.get("semester") and s["semester"] not in ["All", "General"]:
+            sem_c = str(s["semester"]).strip().lower().replace("th", "").replace("st", "").replace("nd", "").replace("rd", "")
+            roster_q["semester"] = {"$regex": f"^{sem_c}(th|st|nd|rd)?$", "$options": "i"}
+            
+        total = db.students.count_documents(roster_q) if roster_q else db.students.count_documents({})
         history.append({
             "id": str(s["_id"]),
             "subject": s["subject"],
+            "branch": s.get("branch", "CSE"),
+            "section": s.get("section", "A"),
+            "semester": s.get("semester", "1"),
             "date": s["date"],
-            "start_time": s["start_time"].strftime('%I:%M %p') if s["start_time"] else "N/A",
-            "end_time": s["end_time"].strftime('%I:%M %p') if s["end_time"] else "Active",
+            "start_time": s["start_time"].strftime('%I:%M %p') if s.get("start_time") else "N/A",
+            "end_time": s["end_time"].strftime('%I:%M %p') if s.get("end_time") else "Active",
             "present": present,
             "total": total,
             "percentage": round((present / total * 100) if total > 0 else 0, 1)
         })
-    return render_template('teacher/attendance_history.html', history=history)
+
+    branches = sorted([b for b in db.students.distinct("branch") if b])
+    sections = sorted([sec for sec in db.students.distinct("section") if sec])
+    semesters = sorted([str(sem) for sem in db.students.distinct("semester") if sem])
+    subjects = sorted([subj for subj in db.sessions.distinct("subject") if subj])
+
+    return render_template(
+        'teacher/attendance_history.html',
+        history=history,
+        branches=branches,
+        sections=sections,
+        semesters=semesters,
+        subjects=subjects,
+        current_filters={
+            "branch": branch,
+            "section": section,
+            "semester": semester,
+            "subject": subject,
+            "date": date_val
+        }
+    )
 
 @teacher_bp.route('/teacher/reports')
 @login_required_teacher
@@ -97,54 +186,179 @@ def reports():
 @teacher_bp.route('/teacher/analytics')
 @login_required_teacher
 def analytics():
-    # Analytics data
-    # Calculate attendance percentages per subject
-    pipeline = [
-        {"$group": {"_id": "$subject", "count": {"$sum": 1}}}
-    ]
-    subjects = list(db.sessions.aggregate(pipeline))
+    # Read filter query parameters
+    branch = request.args.get('branch', 'all')
+    section = request.args.get('section', 'all')
+    semester = request.args.get('semester', 'all')
+    subject = request.args.get('subject', 'all')
     
-    subject_stats = []
-    for sub in subjects:
-        sub_name = sub["_id"]
-        sub_sessions = list(db.sessions.find({"subject": sub_name}))
-        sub_session_ids = [s["_id"] for s in sub_sessions]
+    # 1. Student attendance summary with filters
+    attendance_data = DefaulterService.calculate_student_attendance(
+        branch=branch, section=section, semester=semester, subject=subject
+    )
+    
+    # 2. Subject-wise low attendance analysis
+    subject_analysis = DefaulterService.get_subject_low_attendance_analysis(
+        branch=branch, section=section, semester=semester
+    )
+    
+    # 3. Attendance distribution data for Chart.js
+    distribution = DefaulterService.get_attendance_distribution(attendance_data["students"])
+    
+    # 4. Filter options
+    filter_options = DefaulterService.get_filter_options()
+    
+    return render_template(
+        'teacher/analytics.html',
+        students=attendance_data["students"],
+        defaulters=attendance_data["defaulters"],
+        defaulter_count=attendance_data["defaulter_count"],
+        total_students_count=attendance_data["total_students"],
+        defaulter_percentage=attendance_data["defaulter_percentage"],
+        subject_analysis=subject_analysis,
+        distribution=distribution,
+        filter_options=filter_options,
+        current_filters={
+            "branch": branch,
+            "section": section,
+            "semester": semester,
+            "subject": subject
+        }
+    )
+
+@teacher_bp.route('/teacher/api/analytics/defaulters', methods=['GET'])
+@login_required_teacher
+def api_analytics_defaulters():
+    """API for dynamic filtering on the analytics page without page reload."""
+    try:
+        branch = request.args.get('branch', 'all')
+        section = request.args.get('section', 'all')
+        semester = request.args.get('semester', 'all')
+        subject = request.args.get('subject', 'all')
         
-        # total registered students
-        total_students = db.students.count_documents({})
-        total_slots = total_students * len(sub_sessions)
+        attendance_data = DefaulterService.calculate_student_attendance(
+            branch=branch, section=section, semester=semester, subject=subject
+        )
+        subject_analysis = DefaulterService.get_subject_low_attendance_analysis(
+            branch=branch, section=section, semester=semester
+        )
+        distribution = DefaulterService.get_attendance_distribution(attendance_data["students"])
         
-        # total present records
-        total_present = db.attendance.count_documents({
-            "session_id": {"$in": sub_session_ids},
-            "status": "Present"
+        return jsonify({
+            "success": True,
+            "data": attendance_data,
+            "distribution": distribution,
+            "subject_analysis": subject_analysis
         })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@teacher_bp.route('/teacher/students')
+@login_required_teacher
+def student_management():
+    """Dedicated Student Management page with branch, section, semester, subject filtering."""
+    students = StudentModel.get_all()
+    for s in students:
+        s['id_str'] = str(s['_id'])
         
-        percentage = (total_present / total_slots * 100) if total_slots > 0 else 0.0
-        subject_stats.append({
-            "subject": sub_name,
-            "classes": len(sub_sessions),
-            "percentage": round(percentage, 1)
-        })
-        
-    return render_template('teacher/analytics.html', subject_stats=subject_stats)
+    branches = sorted([b for b in db.students.distinct("branch") if b])
+    sections = sorted([sec for sec in db.students.distinct("section") if sec])
+    semesters = sorted([str(sem) for sem in db.students.distinct("semester") if sem])
+    subjects = sorted([subj for subj in db.students.distinct("subject") if subj] + [subj for subj in db.sessions.distinct("subject") if subj])
+    # deduplicate subjects
+    subjects = sorted(list(set(subjects)))
+    
+    return render_template(
+        'teacher/students.html',
+        students=students,
+        branches=branches,
+        sections=sections,
+        semesters=semesters,
+        subjects=subjects
+    )
+
+@teacher_bp.route('/teacher/api/students/filter', methods=['GET'])
+@login_required_teacher
+def api_filter_students():
+    """Returns filtered students based on branch, semester, section, subject, and keyword search."""
+    try:
+        branch = request.args.get('branch', 'all')
+        section = request.args.get('section', 'all')
+        semester = request.args.get('semester', 'all')
+        subject = request.args.get('subject', 'all')
+        search = request.args.get('search', '').strip()
+
+        students = StudentModel.filter_students(
+            branch=branch,
+            semester=semester,
+            section=section,
+            subject=subject,
+            search=search
+        )
+        data = []
+        for s in students:
+            data.append({
+                "id": str(s["_id"]),
+                "name": s.get("name", "Unknown"),
+                "roll_no": s.get("roll_no", ""),
+                "branch": s.get("branch", ""),
+                "section": s.get("section", ""),
+                "semester": s.get("semester", ""),
+                "subject": s.get("subject", ""),
+                "photo_path": s.get("photo_path", ""),
+                "email": s.get("email", ""),
+                "phone": s.get("phone", "")
+            })
+        return jsonify({"success": True, "students": data, "count": len(data)})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 # --- APIs ---
 
 @teacher_bp.route('/teacher/api/start_session', methods=['POST'])
 @login_required_teacher
 def api_start_session():
-    data = request.get_json()
-    subject = data.get('subject')
-    if not subject:
-        return jsonify({"success": False, "message": "Subject name is required."}), 400
-        
+    data = request.get_json() or {}
+    subject = str(data.get('subject', '')).strip()
+    branch = str(data.get('branch', '')).strip().upper()
+    semester = str(data.get('semester', '')).strip()
+    section = str(data.get('section', '')).strip().upper()
+    date_val = str(data.get('date', '')).strip()
+
+    if not all([subject, branch, semester, section]):
+        return jsonify({
+            "success": False,
+            "message": "Subject, Branch, Semester, and Section are all required to create an attendance session."
+        }), 400
+
+    # Verify that students are registered matching this branch, semester, and section
+    sem_clean = semester.lower().replace("th", "").replace("st", "").replace("nd", "").replace("rd", "").strip()
+    roster_query = {
+        "branch": {"$regex": f"^{branch}$", "$options": "i"},
+        "section": {"$regex": f"^{section}$", "$options": "i"},
+        "semester": {"$regex": f"^{sem_clean}(th|st|nd|rd)?$", "$options": "i"}
+    }
+    matching_students = list(db.students.find(roster_query))
+    if len(matching_students) == 0:
+        return jsonify({
+            "success": False,
+            "message": f"No registered students found for Branch: {branch}, Semester: {semester}, Section: {section}. Please register students for this class before creating a session."
+        }), 400
+
     try:
-        session_record = SessionManager.start_new_session(subject, session['user_id'])
+        session_record = SessionManager.start_new_session(
+            subject=subject,
+            teacher_id=session['user_id'],
+            branch=branch,
+            semester=semester,
+            section=section,
+            date=date_val or None
+        )
         return jsonify({
             "success": True, 
-            "message": f"Session started for {subject}.",
-            "session_id": str(session_record["_id"])
+            "message": f"Session created for {branch} Sem {semester} Sec {section} - {subject} ({len(matching_students)} students enrolled).",
+            "session_id": str(session_record["_id"]),
+            "students_count": len(matching_students)
         })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
@@ -170,16 +384,18 @@ def api_stats():
 @login_required_teacher
 def api_register_start():
     data = request.get_json()
-    roll_no = str(data.get('roll_no')).strip()
-    name = data.get('name').strip()
-    branch = data.get('branch').strip()
-    section = data.get('section').strip()
-    semester = data.get('semester').strip()
-    email = data.get('email').strip()
-    password = data.get('password').strip()
+    roll_no = str(data.get('roll_no', '')).strip()
+    name = data.get('name', '').strip()
+    branch = data.get('branch', '').strip()
+    section = data.get('section', '').strip()
+    semester = data.get('semester', '').strip()
+    subject = data.get('subject', '').strip()
+    email = data.get('email', '').strip()
+    phone = data.get('phone', '').strip()
+    password = data.get('password', '').strip() or phone or "password123"
     
-    if not all([roll_no, name, branch, section, semester, email, password]):
-        return jsonify({"success": False, "message": "All fields are required."}), 400
+    if not all([roll_no, name, branch, section, semester, email, phone]):
+        return jsonify({"success": False, "message": "All required fields (Name, Roll, Branch, Section, Semester, Email, Phone) must be filled."}), 400
         
     # Check if student/user already exists
     if db.students.find_one({"roll_no": roll_no}):
@@ -193,7 +409,9 @@ def api_register_start():
         "branch": branch,
         "section": section,
         "semester": semester,
+        "subject": subject,
         "email": email,
+        "phone": phone,
         "password": password,
         "embeddings": [],
         "images_count": 0
@@ -287,7 +505,8 @@ def api_register_complete():
         avg_embedding = np.mean(all_embeddings, axis=0).tolist()
         
         # 2. Create Student User Credentials
-        user_record = UserModel.create_user(reg_sess["email"], reg_sess["password"], role="student")
+        default_pwd = reg_sess.get("password") or reg_sess.get("phone") or "password123"
+        user_record = UserModel.create_user(reg_sess["email"], default_pwd, role="student")
         if "error" in user_record:
             return jsonify({"success": False, "message": user_record["error"]}), 400
             
@@ -299,9 +518,12 @@ def api_register_complete():
             branch=reg_sess["branch"],
             section=reg_sess["section"],
             semester=reg_sess["semester"],
+            subject=reg_sess.get("subject", ""),
             photo_path=photo_rel_path,
             embedding=avg_embedding,
-            user_id=user_record["_id"]
+            user_id=user_record["_id"],
+            phone=reg_sess.get("phone"),
+            email=reg_sess.get("email")
         )
         
         # Save embedding to local .npy file as backup as requested in requirements
@@ -310,6 +532,9 @@ def api_register_complete():
         
         # Remove from temp cache
         del _reg_sessions[roll_no]
+        
+        # Invalidate student embedding cache so new student is immediately recognized
+        invalidate_student_cache()
         
         return jsonify({
             "success": True, 
@@ -351,6 +576,255 @@ def api_delete_student(student_id):
         # Delete associated attendance records
         db.attendance.delete_many({"student_id": ObjectId(student_id)})
         
+        # Invalidate student embedding cache
+        invalidate_student_cache()
+        
         return jsonify({"success": True, "message": f"Student {student['name']} removed successfully."})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@teacher_bp.route('/teacher/session/<session_id>/attendance', methods=['GET'])
+@login_required_teacher
+def view_session_attendance(session_id):
+    """Redirect to session history with edit modal triggered."""
+    return redirect(url_for('teacher.attendance_history', edit_session=session_id))
+
+@teacher_bp.route('/teacher/session/<session_id>/view', methods=['GET'])
+@login_required_teacher
+def view_session_full_page(session_id):
+    """Render a dedicated full-page manual attendance sheet for this session."""
+    try:
+        session_oid = ObjectId(session_id)
+        session_doc = db.sessions.find_one({"_id": session_oid})
+        if not session_doc:
+            flash("Session not found.", "danger")
+            return redirect(url_for('teacher.attendance_history'))
+
+        # Scope student roster strictly to session's branch, semester, section
+        roster_q = {}
+        if session_doc.get("branch") and session_doc["branch"] not in ["All", "General"]:
+            roster_q["branch"] = {"$regex": f"^{session_doc['branch'].strip()}$", "$options": "i"}
+        if session_doc.get("section") and session_doc["section"] not in ["All", "General"]:
+            roster_q["section"] = {"$regex": f"^{session_doc['section'].strip()}$", "$options": "i"}
+        if session_doc.get("semester") and session_doc["semester"] not in ["All", "General"]:
+            sem_c = str(session_doc["semester"]).strip().lower().replace("th", "").replace("st", "").replace("nd", "").replace("rd", "")
+            roster_q["semester"] = {"$regex": f"^{sem_c}(th|st|nd|rd)?$", "$options": "i"}
+
+        all_students = list(db.students.find(roster_q).sort("roll_no", 1)) if roster_q else list(db.students.find({}).sort("roll_no", 1))
+        attendance_docs = list(db.attendance.find({"session_id": session_oid}))
+        att_map = {str(a.get("student_id")): a for a in attendance_docs}
+
+        student_roster = []
+        present_count = 0
+        for s in all_students:
+            s_id_str = str(s["_id"])
+            att_record = att_map.get(s_id_str)
+            status = att_record.get("status", "Present") if att_record else "Absent"
+            if status == "Present":
+                present_count += 1
+            student_roster.append({
+                "id": s_id_str,
+                "name": s.get("name", "Unknown"),
+                "roll_no": s.get("roll_no", "N/A"),
+                "branch": s.get("branch", "N/A"),
+                "section": s.get("section", "N/A"),
+                "semester": s.get("semester", "N/A"),
+                "status": status,
+                "time": att_record.get("time", "-") if att_record else "-",
+                "manually_corrected": bool(att_record.get("manually_corrected", False)) if att_record else False,
+                "photo_path": s.get("photo_path", "")
+            })
+
+        total_students = len(all_students)
+        absent_count = max(0, total_students - present_count)
+        rate = round((present_count / total_students * 100) if total_students > 0 else 0, 1)
+
+        corrections = AttendanceCorrectionModel.get_by_session(session_id)
+        formatted_corrections = []
+        for c in corrections:
+            formatted_corrections.append({
+                "id": str(c["_id"]),
+                "student_name": c.get("student_name", ""),
+                "student_roll": c.get("student_roll", ""),
+                "original_status": c.get("original_status", ""),
+                "updated_status": c.get("updated_status", ""),
+                "reason": c.get("reason", ""),
+                "teacher_email": c.get("teacher_email", "Teacher"),
+                "time": c.get("formatted_time", c.get("correction_time", "").strftime('%b %d, %Y %I:%M %p') if isinstance(c.get("correction_time"), datetime.datetime) else str(c.get("correction_time", "")))
+            })
+
+        session_data = {
+            "id": str(session_doc["_id"]),
+            "subject": session_doc.get("subject", "General"),
+            "branch": session_doc.get("branch", "CSE"),
+            "section": session_doc.get("section", "A"),
+            "semester": session_doc.get("semester", "1"),
+            "date": session_doc.get("date", ""),
+            "is_active": session_doc.get("is_active", False),
+            "start_time": session_doc["start_time"].strftime('%I:%M %p') if session_doc.get("start_time") else "N/A",
+            "end_time": session_doc["end_time"].strftime('%I:%M %p') if session_doc.get("end_time") else "Active"
+        }
+
+        stats = {
+            "total": total_students,
+            "present": present_count,
+            "absent": absent_count,
+            "rate": rate
+        }
+
+        return render_template(
+            'teacher/session_view.html',
+            session=session_data,
+            stats=stats,
+            students=student_roster,
+            corrections=formatted_corrections
+        )
+    except Exception as e:
+        flash(f"Error loading session: {str(e)}", "danger")
+        return redirect(url_for('teacher.attendance_history'))
+
+@teacher_bp.route('/teacher/api/session/<session_id>/attendance', methods=['GET'])
+@login_required_teacher
+def api_session_attendance(session_id):
+    """Fetch all students and their attendance status for a given session."""
+    try:
+        session_oid = ObjectId(session_id)
+        session_doc = db.sessions.find_one({"_id": session_oid})
+        if not session_doc:
+            return jsonify({"success": False, "message": "Session not found."}), 404
+
+        # Scope student roster strictly to session's branch, semester, section
+        roster_q = {}
+        if session_doc.get("branch") and session_doc["branch"] not in ["All", "General"]:
+            roster_q["branch"] = {"$regex": f"^{session_doc['branch'].strip()}$", "$options": "i"}
+        if session_doc.get("section") and session_doc["section"] not in ["All", "General"]:
+            roster_q["section"] = {"$regex": f"^{session_doc['section'].strip()}$", "$options": "i"}
+        if session_doc.get("semester") and session_doc["semester"] not in ["All", "General"]:
+            sem_c = str(session_doc["semester"]).strip().lower().replace("th", "").replace("st", "").replace("nd", "").replace("rd", "")
+            roster_q["semester"] = {"$regex": f"^{sem_c}(th|st|nd|rd)?$", "$options": "i"}
+
+        all_students = list(db.students.find(roster_q).sort("roll_no", 1)) if roster_q else list(db.students.find({}).sort("roll_no", 1))
+        # Fetch attendance for this session
+        attendance_docs = list(db.attendance.find({"session_id": session_oid}))
+        att_map = {}
+        for a in attendance_docs:
+            s_id_str = str(a.get("student_id"))
+            att_map[s_id_str] = a
+
+        student_roster = []
+        present_count = 0
+        for s in all_students:
+            s_id_str = str(s["_id"])
+            att_record = att_map.get(s_id_str)
+            status = att_record.get("status", "Present") if att_record else "Absent"
+            if status == "Present":
+                present_count += 1
+            student_roster.append({
+                "id": s_id_str,
+                "name": s.get("name", "Unknown"),
+                "roll_no": s.get("roll_no", "N/A"),
+                "branch": s.get("branch", "N/A"),
+                "section": s.get("section", "N/A"),
+                "semester": s.get("semester", "N/A"),
+                "status": status,
+                "time": att_record.get("time", "-") if att_record else "-",
+                "manually_corrected": bool(att_record.get("manually_corrected", False)) if att_record else False,
+                "photo_path": s.get("photo_path", "")
+            })
+
+        total_students = len(all_students)
+        absent_count = max(0, total_students - present_count)
+        rate = round((present_count / total_students * 100) if total_students > 0 else 0, 1)
+
+        # Fetch corrections for this session
+        corrections = AttendanceCorrectionModel.get_by_session(session_id)
+        formatted_corrections = []
+        for c in corrections:
+            formatted_corrections.append({
+                "id": str(c["_id"]),
+                "student_name": c.get("student_name", ""),
+                "student_roll": c.get("student_roll", ""),
+                "original_status": c.get("original_status", ""),
+                "updated_status": c.get("updated_status", ""),
+                "reason": c.get("reason", ""),
+                "teacher_email": c.get("teacher_email", "Teacher"),
+                "time": c.get("formatted_time", c.get("correction_time", "").strftime('%b %d, %Y %I:%M %p') if isinstance(c.get("correction_time"), datetime.datetime) else str(c.get("correction_time", "")))
+            })
+
+        return jsonify({
+            "success": True,
+            "session": {
+                "id": str(session_doc["_id"]),
+                "subject": session_doc.get("subject", "General"),
+                "branch": session_doc.get("branch", "CSE"),
+                "section": session_doc.get("section", "A"),
+                "semester": session_doc.get("semester", "1"),
+                "date": session_doc.get("date", ""),
+                "is_active": session_doc.get("is_active", False),
+                "start_time": session_doc["start_time"].strftime('%I:%M %p') if session_doc.get("start_time") else "N/A",
+                "end_time": session_doc["end_time"].strftime('%I:%M %p') if session_doc.get("end_time") else "Active"
+            },
+            "stats": {
+                "total": total_students,
+                "present": present_count,
+                "absent": absent_count,
+                "rate": rate
+            },
+            "students": student_roster,
+            "corrections": formatted_corrections
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@teacher_bp.route('/teacher/api/attendance/correct', methods=['POST'])
+@teacher_bp.route('/teacher/api/correct_attendance', methods=['POST'])
+@login_required_teacher
+def api_attendance_correct():
+    """Manually update student attendance status with reason and audit log."""
+    try:
+        data = request.get_json() or {}
+        session_id = data.get("session_id")
+        student_id = data.get("student_id")
+        new_status = data.get("new_status") or data.get("status")
+        reason = (data.get("reason") or "").strip()
+
+        if not session_id or not student_id or not new_status:
+            return jsonify({"success": False, "message": "Session ID, student ID, and new status are required."}), 400
+
+        if new_status not in ["Present", "Absent"]:
+            return jsonify({"success": False, "message": "Status must be either 'Present' or 'Absent'."}), 400
+
+        if not reason:
+            return jsonify({"success": False, "message": "A reason is mandatory for correcting attendance."}), 400
+
+        teacher_id = session.get("user_id")
+
+        result = AttendanceModel.correct_attendance(
+            student_id=student_id,
+            session_id=session_id,
+            new_status=new_status,
+            reason=reason,
+            teacher_id=teacher_id
+        )
+
+        if "error" in result:
+            return jsonify({"success": False, "message": result["error"]}), 400
+
+        now_formatted = datetime.datetime.now().strftime('%b %d, %Y %I:%M %p')
+        return jsonify({
+            "success": True,
+            "message": result.get("message", "Attendance corrected successfully."),
+            "data": result,
+            "stats": result.get("stats"),
+            "correction": {
+                "time": now_formatted,
+                "student_name": result.get("student_name", ""),
+                "student_roll": result.get("student_roll", ""),
+                "original_status": result.get("original_status", ""),
+                "updated_status": result.get("updated_status", ""),
+                "reason": reason,
+                "teacher_email": session.get("user_email", "Teacher")
+            }
+        })
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500

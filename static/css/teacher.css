@@ -163,6 +163,45 @@
     transform: scaleX(-1); /* Mirror canvas to align with mirrored webcam video */
 }
 
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--text-muted);
+    transition: all 0.3s ease;
+}
+
+.status-dot.active {
+    background-color: var(--success);
+    box-shadow: 0 0 10px var(--success-glow);
+}
+
+.status-dot.info {
+    background-color: #38bdf8;
+    box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+
+.status-dot.warning {
+    background-color: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+}
+
+.status-dot.danger {
+    background-color: var(--danger);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);
+}
+
+.status-dot.blink {
+    animation: flash 1s infinite alternate;
+}
+
 .liveness-status {
     position: absolute;
     bottom: 20px;
@@ -176,29 +215,98 @@
     gap: 4px;
     font-size: 0.85rem;
     z-index: 10;
+    transition: all 0.3s ease;
 }
 
-.status-indicator {
+.liveness-status.status-spoof {
+    border-color: rgba(239, 68, 68, 0.6);
+    background: rgba(26, 10, 10, 0.92);
+}
+
+.liveness-status.status-failed {
+    border-color: rgba(239, 68, 68, 0.6);
+    background: rgba(30, 15, 15, 0.92);
+}
+
+.liveness-status.status-verified {
+    border-color: rgba(16, 185, 129, 0.6);
+    background: rgba(10, 26, 18, 0.92);
+}
+
+.liveness-status.status-verifying {
+    border-color: rgba(245, 158, 11, 0.6);
+    background: rgba(26, 20, 10, 0.92);
+}
+
+/* Multi-Step Challenge Badges */
+.challenge-steps {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.step-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
     font-weight: 600;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-glass);
+    color: var(--text-muted);
+    transition: all 0.3s ease;
 }
 
-.status-dot {
-    width: 8px;
-    height: 8px;
+.step-badge .step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
-    background-color: var(--text-muted);
+    font-size: 0.65rem;
+    background: rgba(255, 255, 255, 0.1);
 }
 
-.status-dot.active {
-    background-color: var(--success);
-    box-shadow: 0 0 10px var(--success-glow);
+.step-badge.in_progress {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.5);
+    color: #fbbf24;
+    animation: pulse 1.5s infinite;
 }
 
-.status-dot.blink {
-    animation: flash 1s infinite alternate;
+.step-badge.in_progress .step-num {
+    background: #f59e0b;
+    color: #000;
+}
+
+.step-badge.completed {
+    background: rgba(16, 185, 129, 0.15);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #34d399;
+}
+
+.step-badge.completed .step-num {
+    background: #10b981;
+    color: #fff;
+}
+
+.step-badge.failed, .step-badge.spoof {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #f87171;
+}
+
+.step-badge.failed .step-num, .step-badge.spoof .step-num {
+    background: #ef4444;
+    color: #fff;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.02); opacity: 0.85; }
 }
 
 @keyframes flash {
