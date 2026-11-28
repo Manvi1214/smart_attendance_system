@@ -1,86 +1,279 @@
 {% extends "base.html" %}
 
-{% block title %}Reports Export - Smart Attendance System{% endblock %}
+{% block title %}Reports & Exports - Smart Attendance System{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+<style>
+.reports-kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.report-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: var(--transition-fast);
+}
+.report-card:hover {
+    border-color: var(--border-glow);
+    transform: translateY(-2px);
+}
+.report-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+.report-filter-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)) 1.2fr auto;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 20px;
+    background: var(--bg-card);
+    padding: 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+}
+@media (max-width: 900px) {
+    .report-filter-bar {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+@media (max-width: 600px) {
+    .report-filter-bar {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-layout">
     
     <!-- Sidebar Navigation -->
-    <div class="sidebar">
-        <div class="brand">
-            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
-                <i class="fa-solid fa-graduation-cap" style="font-size: 1.1rem; color: white;"></i>
-            </div>
-            <span class="brand-text">Smart Attendance</span>
-        </div>
-        
-        <ul class="nav-menu">
-            <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
-            <li><a href="{{ url_for('teacher.register_student') }}" class="nav-link"><i class="fa-solid fa-user-plus"></i> Register Student</a></li>
-            <li><a href="{{ url_for('teacher.start_attendance') }}" class="nav-link"><i class="fa-solid fa-camera"></i> Start Attendance</a></li>
-            <li><a href="{{ url_for('teacher.attendance_history') }}" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i> Session History</a></li>
-            <li><a href="{{ url_for('teacher.reports') }}" class="nav-link active"><i class="fa-solid fa-file-invoice"></i> Reports Export</a></li>
-            <li><a href="{{ url_for('teacher.analytics') }}" class="nav-link"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
-        </ul>
-        
-        <div class="nav-logout">
-            <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-        </div>
-    </div>
+    {% set active_page = 'reports' %}
+    {% include "teacher/components/sidebar.html" %}
 
     <!-- Main Content Panel -->
     <div class="main-panel">
         
+        <!-- Header -->
         <div class="panel-header">
             <div>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Reporting</p>
-                <h1 class="panel-title">Export Student PDF Reports</h1>
+                <p style="color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 4px; font-weight: 600;">Documentation & Compliance</p>
+                <h1 class="panel-title">Reports & Export Hub</h1>
+                <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 4px;">Download individual student attendance dossiers and export session audit logs.</p>
+            </div>
+            <div>
+                <a href="{{ url_for('teacher.attendance_history') }}" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Session Spreadsheets
+                </a>
             </div>
         </div>
 
-        <div class="glass-card animate-fade-in">
-            <h3 style="margin-bottom: 20px; color: white;">Student Directory</h3>
+        <!-- KPI / Feature Cards -->
+        <div class="reports-kpi-grid">
+            <div class="report-card">
+                <div class="report-card-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">
+                    <i class="fa-solid fa-users"></i>
+                </div>
+                <div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Total Enrolled</span>
+                    <h3 style="margin: 4px 0 0; font-size: 1.5rem; font-weight: 700; color: white;" id="kpi-total-students">{{ students | length }}</h3>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Active student records</span>
+                </div>
+            </div>
+
+            <div class="report-card">
+                <div class="report-card-icon" style="background: rgba(239, 68, 68, 0.15); color: #f87171;">
+                    <i class="fa-regular fa-file-pdf"></i>
+                </div>
+                <div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">PDF Dossiers</span>
+                    <h3 style="margin: 4px 0 0; font-size: 1.5rem; font-weight: 700; color: white;">Individual</h3>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Official letterhead export</span>
+                </div>
+            </div>
+
+            <div class="report-card">
+                <div class="report-card-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+                    <i class="fa-solid fa-file-excel"></i>
+                </div>
+                <div>
+                    <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">Batch Exports</span>
+                    <h3 style="margin: 4px 0 0; font-size: 1.5rem; font-weight: 700; color: white;">CSV / XLSX</h3>
+                    <span style="font-size: 0.75rem; color: var(--text-secondary);">Via Session History</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Toolbar -->
+        <div class="report-filter-bar">
+            <div>
+                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 600;">Branch</label>
+                <select id="filter-branch" class="custom-input" onchange="applyReportFilters()">
+                    <option value="">All Branches</option>
+                    <option value="CSE">CSE</option>
+                    <option value="IT">IT</option>
+                    <option value="ECE">ECE</option>
+                    <option value="ME">ME</option>
+                    <option value="CE">CE</option>
+                    <option value="EE">EE</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 600;">Semester</label>
+                <select id="filter-semester" class="custom-input" onchange="applyReportFilters()">
+                    <option value="">All Semesters</option>
+                    {% for sem in [1, 2, 3, 4, 5, 6, 7, 8] %}
+                    <option value="{{ sem }}">Semester {{ sem }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 600;">Section</label>
+                <select id="filter-section" class="custom-input" onchange="applyReportFilters()">
+                    <option value="">All Sections</option>
+                    {% for sec in ['A', 'B', 'C', 'D'] %}
+                    <option value="{{ sec }}">Section {{ sec }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label style="display: block; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; font-weight: 600;">Search</label>
+                <div style="position: relative;">
+                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
+                    <input type="text" id="filter-search" class="custom-input" placeholder="Search by name or roll number..." style="padding-left: 36px;" oninput="applyReportFilters()">
+                </div>
+            </div>
+            <div>
+                <button type="button" class="btn btn-secondary" onclick="resetReportFilters()" style="height: 42px; display: inline-flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-rotate-left"></i> Reset
+                </button>
+            </div>
+        </div>
+
+        <!-- Student Dossiers Directory Card -->
+        <div class="glass-card animate-fade-in" style="padding: 0; overflow: hidden;">
+            <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: white; display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-regular fa-folder-open" style="color: var(--primary);"></i> Student Dossiers
+                    </h3>
+                    <p style="margin: 4px 0 0; color: var(--text-secondary); font-size: 0.85rem;">Generate individual official attendance PDF reports for students.</p>
+                </div>
+                <span class="badge badge-neutral" id="visible-count-badge">{{ students | length }} Students Visible</span>
+            </div>
+
             <div class="table-wrapper">
-                <table class="custom-table">
+                <table class="custom-table" id="reports-table">
                     <thead>
                         <tr>
-                            <th>Photo</th>
+                            <th style="width: 70px;">Photo</th>
                             <th>Roll Number</th>
-                            <th>Name</th>
+                            <th>Student Name</th>
                             <th>Branch</th>
-                            <th>Section</th>
                             <th>Semester</th>
-                            <th>Export Report</th>
+                            <th>Section</th>
+                            <th>Contact</th>
+                            <th style="text-align: right;">Official Export</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="reports-tbody">
                         {% if students %}
                             {% for student in students %}
-                            <tr>
+                            {% set photo_url = ('/' + student.photo_path) if (student.photo_path and student.photo_path.startswith('static/')) else (('/static/' + student.photo_path) if student.photo_path else '') %}
+                            <tr class="report-row" 
+                                data-branch="{{ student.branch | upper }}" 
+                                data-semester="{{ student.semester }}" 
+                                data-section="{{ student.section | upper }}" 
+                                data-search="{{ student.name | lower }} {{ student.roll_no | lower }}">
                                 <td>
-                                    <img src="/{{ student.photo_path }}" class="face-thumbnail" onerror="this.src='/static/images/default_profile.png'">
+                                    <div style="position: relative; width: 36px; height: 36px; display: inline-block;">
+                                        {% if photo_url %}
+                                            <img src="{{ photo_url }}" 
+                                                 alt="{{ student.name }}" 
+                                                 style="width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255,255,255,0.12);" 
+                                                 onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
+                                            <div style="display: none; width: 36px; height: 36px; border-radius: 50%; background: rgba(99, 102, 241, 0.2); align-items: center; justify-content: center; font-weight: 700; color: #818cf8; font-size: 0.85rem;">
+                                                {{ (student.name or 'S')[0] | upper }}
+                                            </div>
+                                        {% else %}
+                                            <div style="width: 36px; height: 36px; border-radius: 50%; background: rgba(99, 102, 241, 0.2); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #818cf8; font-size: 0.85rem;">
+                                                {{ (student.name or 'S')[0] | upper }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </td>
-                                <td><b>{{ student.roll_no }}</b></td>
-                                <td>{{ student.name }}</td>
-                                <td>{{ student.branch }}</td>
-                                <td>{{ student.section }}</td>
-                                <td>Semester {{ student.semester }}</td>
                                 <td>
-                                    <a href="/reports/export/pdf/{{ student._id }}" class="btn btn-primary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
+                                    <span style="font-weight: 700; color: var(--text-primary); font-family: 'JetBrains Mono', monospace;">{{ student.roll_no }}</span>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 600; color: white;">{{ student.name }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-primary">{{ student.branch }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-neutral">Sem {{ student.semester }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-neutral">Sec {{ student.section }}</span>
+                                </td>
+                                <td>
+                                    <div style="font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4;">
+                                        {% if student.email %}
+                                            <div><i class="fa-regular fa-envelope" style="font-size: 0.75rem; margin-right: 4px;"></i> {{ student.email }}</div>
+                                        {% endif %}
+                                        {% if student.phone %}
+                                            <div><i class="fa-solid fa-phone" style="font-size: 0.7rem; margin-right: 4px;"></i> {{ student.phone }}</div>
+                                        {% endif %}
+                                        {% if not student.email and not student.phone %}
+                                            <span style="color: var(--text-muted);">-</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td style="text-align: right;">
+                                    <a href="/reports/export/pdf/{{ student._id }}" 
+                                       class="btn btn-primary" 
+                                       style="padding: 7px 14px; font-size: 0.8rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 7px;"
+                                       title="Download official PDF attendance dossier">
                                         <i class="fa-regular fa-file-pdf"></i> Download PDF
                                     </a>
                                 </td>
                             </tr>
                             {% endfor %}
                         {% else %}
-                            <tr>
-                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No students enrolled in the system yet.</td>
+                            <tr id="no-students-initial">
+                                <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 48px 24px;">
+                                    <div style="font-size: 2.2rem; margin-bottom: 12px; color: var(--border-glow);"><i class="fa-solid fa-user-slash"></i></div>
+                                    <h4 style="color: var(--text-secondary); margin-bottom: 4px;">No Students Enrolled</h4>
+                                    <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0;">Enrolled students will appear here with instant PDF export capabilities.</p>
+                                </td>
                             </tr>
                         {% endif %}
+                        <tr id="no-match-row" style="display: none;">
+                            <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 48px 24px;">
+                                <div style="font-size: 2.2rem; margin-bottom: 12px; color: var(--border-glow);"><i class="fa-solid fa-filter-circle-xmark"></i></div>
+                                <h4 style="color: var(--text-secondary); margin-bottom: 4px;">No Students Found</h4>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 0 0 16px;">No enrolled students match your active filter selections.</p>
+                                <button type="button" class="btn btn-secondary" onclick="resetReportFilters()" style="font-size: 0.8rem; padding: 6px 14px;">
+                                    Clear Filters
+                                </button>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -88,4 +281,55 @@
 
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function applyReportFilters() {
+    const branch = (document.getElementById('filter-branch').value || '').trim().toUpperCase();
+    const semester = (document.getElementById('filter-semester').value || '').trim();
+    const section = (document.getElementById('filter-section').value || '').trim().toUpperCase();
+    const search = (document.getElementById('filter-search').value || '').trim().toLowerCase();
+
+    const rows = document.querySelectorAll('.report-row');
+    let visibleCount = 0;
+
+    rows.forEach(row => {
+        const rowBranch = (row.getAttribute('data-branch') || '').toUpperCase();
+        const rowSemester = row.getAttribute('data-semester') || '';
+        const rowSection = (row.getAttribute('data-section') || '').toUpperCase();
+        const rowSearch = row.getAttribute('data-search') || '';
+
+        const matchBranch = !branch || rowBranch === branch;
+        const matchSem = !semester || rowSemester === semester;
+        const matchSec = !section || rowSection === section;
+        const matchSearch = !search || rowSearch.includes(search);
+
+        if (matchBranch && matchSem && matchSec && matchSearch) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+
+    const noMatchRow = document.getElementById('no-match-row');
+    if (noMatchRow) {
+        noMatchRow.style.display = (visibleCount === 0 && rows.length > 0) ? '' : 'none';
+    }
+
+    const badge = document.getElementById('visible-count-badge');
+    if (badge) {
+        badge.textContent = `${visibleCount} Students Visible`;
+    }
+}
+
+function resetReportFilters() {
+    document.getElementById('filter-branch').value = '';
+    document.getElementById('filter-semester').value = '';
+    document.getElementById('filter-section').value = '';
+    document.getElementById('filter-search').value = '';
+    applyReportFilters();
+}
+</script>
 {% endblock %}

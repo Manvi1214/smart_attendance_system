@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}{{ session.subject }} - Attendance Sheet | Smart Attendance{% endblock %}
+{% block title %}{{ session.subject }} - Attendance Sheet | Smart Attendance SaaS{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
 <style>
 @media print {
-    .sidebar, .nav-menu, .btn, .search-filter-row, .no-print {
+    .sidebar, .nav-menu, .btn, .search-filter-row, .no-print, .mobile-topbar {
         display: none !important;
     }
     .main-panel {
@@ -35,6 +35,7 @@
     .badge {
         border: 1px solid #000 !important;
         color: black !important;
+        background: transparent !important;
     }
 }
 </style>
@@ -43,92 +44,74 @@
 {% block content %}
 <div class="dashboard-layout">
     
-    <!-- Sidebar Navigation -->
-    <div class="sidebar no-print">
-        <div class="brand">
-            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
-                <i class="fa-solid fa-graduation-cap" style="font-size: 1.1rem; color: white;"></i>
-            </div>
-            <span class="brand-text">Smart Attendance</span>
-        </div>
-        
-        <ul class="nav-menu">
-            <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
-            <li><a href="{{ url_for('teacher.student_management') }}" class="nav-link"><i class="fa-solid fa-users"></i> Student Management</a></li>
-            <li><a href="{{ url_for('teacher.register_student') }}" class="nav-link"><i class="fa-solid fa-user-plus"></i> Register Student</a></li>
-            <li><a href="{{ url_for('teacher.start_attendance') }}" class="nav-link"><i class="fa-solid fa-camera"></i> Start Attendance</a></li>
-            <li><a href="{{ url_for('teacher.attendance_history') }}" class="nav-link active"><i class="fa-solid fa-clock-rotate-left"></i> Session History</a></li>
-            <li><a href="{{ url_for('teacher.reports') }}" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Reports Export</a></li>
-            <li><a href="{{ url_for('teacher.analytics') }}" class="nav-link"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
-        </ul>
-        
-        <div class="nav-logout">
-            <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-        </div>
+    <!-- Unified Sidebar Navigation -->
+    <div class="no-print">
+        {% set active_page = 'attendance_history' %}
+        {% include "teacher/components/sidebar.html" %}
     </div>
 
     <!-- Main Content Panel -->
-    <div class="main-panel">
+    <main class="main-panel">
         
         <!-- Header & Breadcrumbs -->
-        <div class="panel-header" style="flex-wrap: wrap; gap: 16px;">
+        <header class="panel-header" style="flex-wrap: wrap; gap: 16px;">
             <div>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">
+                <p style="color: var(--text-muted); font-size: 0.8125rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">
                     <a href="{{ url_for('teacher.dashboard') }}" style="color: var(--text-muted); text-decoration: none;">Dashboard</a> &gt; 
                     <a href="{{ url_for('teacher.attendance_history') }}" style="color: var(--text-muted); text-decoration: none;">Session History</a> &gt; 
-                    <span style="color: #818cf8;">{{ session.subject }}</span>
+                    <span style="color: var(--primary-light);">{{ session.subject }}</span>
                 </p>
                 <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
                     <h1 class="panel-title" style="margin: 0;">{{ session.subject }}</h1>
-                    <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 600; font-size: 0.85rem; padding: 4px 12px;">
+                    <span class="badge badge-primary" style="font-size: 0.8125rem;">
                         {{ session.branch }} - Sem {{ session.semester }} (Sec {{ session.section }})
                     </span>
                     {% if session.is_active %}
-                        <span class="badge badge-warning" style="font-size: 0.82rem; padding: 4px 10px;">Active Session</span>
+                        <span class="badge badge-warning">Active Session</span>
                     {% else %}
-                        <span class="badge badge-success" style="font-size: 0.82rem; padding: 4px 10px;">Completed</span>
+                        <span class="badge badge-success">Completed</span>
                     {% endif %}
                 </div>
-                <p style="color: var(--text-muted); font-size: 0.85rem; margin: 6px 0 0 0;">
+                <p style="color: var(--text-muted); font-size: 0.8125rem; margin: 6px 0 0 0;">
                     <i class="fa-regular fa-calendar" style="margin-right: 6px;"></i>Date: <b>{{ session.date }}</b> | 
                     <i class="fa-regular fa-clock" style="margin-right: 6px; margin-left: 10px;"></i>Time: <b>{{ session.start_time }} - {{ session.end_time }}</b>
                 </p>
             </div>
 
             <!-- Action Toolbar -->
-            <div class="no-print" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                <button type="button" class="btn btn-secondary" onclick="window.print()" style="padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+            <div class="no-print" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="window.print()">
                     <i class="fa-solid fa-print"></i> Print Sheet
                 </button>
-                <a href="/reports/export/csv/{{ session.id }}" class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                <a href="/reports/export/csv/{{ session.id }}" class="btn btn-secondary btn-sm">
                     <i class="fa-solid fa-file-csv"></i> CSV
                 </a>
-                <a href="/reports/export/excel/{{ session.id }}" class="btn btn-secondary" style="padding: 8px 14px; font-size: 0.85rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                <a href="/reports/export/excel/{{ session.id }}" class="btn btn-secondary btn-sm">
                     <i class="fa-solid fa-file-excel"></i> Excel
                 </a>
-                <button type="button" class="btn btn-primary" onclick="openSessionDetailsModal('{{ session.id }}')" style="padding: 8px 16px; font-size: 0.85rem; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px;">
+                <button type="button" class="btn btn-primary btn-sm" onclick="openSessionDetailsModal('{{ session.id }}')">
                     <i class="fa-solid fa-user-pen"></i> Edit Attendance
                 </button>
             </div>
-        </div>
+        </header>
 
         <!-- 4 Summary Stat Cards -->
-        <div class="stats-grid" style="margin-bottom: 24px;">
-            <div class="glass-card stat-card">
+        <section class="stats-grid animate-fade-in" style="margin-bottom: 24px;">
+            <div class="stat-card primary">
                 <div class="stat-header">
-                    <span class="stat-title">Total Enrolled</span>
-                    <div class="stat-icon" style="background: rgba(99, 102, 241, 0.15); color: var(--primary);">
+                    <span>Total Enrolled</span>
+                    <div class="stat-icon primary">
                         <i class="fa-solid fa-users"></i>
                     </div>
                 </div>
-                <div class="stat-value" style="color: white;">{{ stats.total }}</div>
+                <div class="stat-value">{{ stats.total }}</div>
                 <div class="stat-footer">Enrolled for {{ session.branch }} Sem {{ session.semester }} (Sec {{ session.section }})</div>
             </div>
 
-            <div class="glass-card stat-card">
+            <div class="stat-card success">
                 <div class="stat-header">
-                    <span class="stat-title">Present</span>
-                    <div class="stat-icon" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">
+                    <span>Present</span>
+                    <div class="stat-icon success">
                         <i class="fa-solid fa-user-check"></i>
                     </div>
                 </div>
@@ -136,47 +119,47 @@
                 <div class="stat-footer">Marked present in this session</div>
             </div>
 
-            <div class="glass-card stat-card">
+            <div class="stat-card danger">
                 <div class="stat-header">
-                    <span class="stat-title">Absent</span>
-                    <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: var(--danger);">
+                    <span>Absent</span>
+                    <div class="stat-icon danger">
                         <i class="fa-solid fa-user-xmark"></i>
                     </div>
                 </div>
                 <div class="stat-value" style="color: var(--danger);">{{ stats.absent }}</div>
-                <div class="stat-footer">Students not detected / absent</div>
+                <div class="stat-footer">Students absent / unverified</div>
             </div>
 
-            <div class="glass-card stat-card">
+            <div class="stat-card secondary">
                 <div class="stat-header">
-                    <span class="stat-title">Attendance Rate</span>
-                    <div class="stat-icon" style="background: rgba(56, 189, 248, 0.15); color: var(--secondary);">
+                    <span>Attendance Rate</span>
+                    <div class="stat-icon secondary">
                         <i class="fa-solid fa-percent"></i>
                     </div>
                 </div>
                 <div class="stat-value" style="color: {% if stats.rate >= 75 %}var(--success){% else %}var(--danger){% endif %};">
                     {{ stats.rate }}%
                 </div>
-                <div class="stat-footer">Present / Total ratio</div>
+                <div class="stat-footer">Present to total student ratio</div>
             </div>
-        </div>
+        </section>
 
         <!-- Student Attendance Sheet Card -->
-        <div class="glass-card animate-fade-in" style="margin-bottom: 32px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 12px;" class="search-filter-row no-print">
-                <div style="position: relative; flex: 1; min-width: 260px;">
-                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.85rem;"></i>
-                    <input type="text" id="pageSheetSearch" oninput="filterPageSheet()" placeholder="Search students by name or roll number..." class="custom-input" style="padding-left: 38px; width: 100%; height: 40px; background: rgba(15, 23, 42, 0.7); border-radius: 8px; color: white;">
+        <section class="glass-card animate-fade-in" style="margin-bottom: 28px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;" class="search-filter-row no-print">
+                <div style="position: relative; flex: 1; min-width: 240px;">
+                    <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8125rem;"></i>
+                    <input type="text" id="pageSheetSearch" oninput="filterPageSheet()" placeholder="Search students by name or roll number..." class="form-control" style="padding-left: 36px; height: 38px; font-size: 0.85rem;">
                 </div>
-                <div style="display: flex; gap: 8px;">
-                    <button type="button" class="btn btn-secondary active" id="btnFilterAll" onclick="setPageFilter('all')" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 20px;">All ({{ stats.total }})</button>
-                    <button type="button" class="btn btn-secondary" id="btnFilterPresent" onclick="setPageFilter('Present')" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 20px; color: var(--success);">Present ({{ stats.present }})</button>
-                    <button type="button" class="btn btn-secondary" id="btnFilterAbsent" onclick="setPageFilter('Absent')" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 20px; color: var(--danger);">Absent ({{ stats.absent }})</button>
+                <div style="display: flex; gap: 6px;">
+                    <button type="button" class="btn btn-secondary btn-sm active" id="btnFilterAll" onclick="setPageFilter('all')">All ({{ stats.total }})</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btnFilterPresent" onclick="setPageFilter('Present')" style="color: var(--success);">Present ({{ stats.present }})</button>
+                    <button type="button" class="btn btn-secondary btn-sm" id="btnFilterAbsent" onclick="setPageFilter('Absent')" style="color: var(--danger);">Absent ({{ stats.absent }})</button>
                 </div>
             </div>
 
             <div class="table-wrapper">
-                <table class="custom-table" style="font-size: 0.88rem;">
+                <table class="custom-table" style="font-size: 0.875rem;">
                     <thead>
                         <tr>
                             <th>#</th>
@@ -199,40 +182,32 @@
                                     {% set p_url = '/' + st.photo_path if (st.photo_path and st.photo_path.startswith('static/')) else ('/static/' + st.photo_path if st.photo_path else '') %}
                                     {% if p_url %}
                                         <div style="position: relative; width: 34px; height: 34px; display: inline-block;">
-                                            <img src="{{ p_url }}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 1.5px solid rgba(255,255,255,0.15);" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';">
-                                            <div style="display: none; width: 34px; height: 34px; border-radius: 50%; background: rgba(99, 102, 241, 0.2); align-items: center; justify-content: center; font-weight: 700; color: #818cf8; font-size: 0.85rem;">
-                                                {{ (st.name or 'S')[0] }}
-                                            </div>
+                                            <img src="{{ p_url }}" class="face-thumbnail" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';">
+                                            <div class="avatar-placeholder" style="display: none;">{{ (st.name or 'S')[0] | upper }}</div>
                                         </div>
                                     {% else %}
-                                        <div style="width: 34px; height: 34px; border-radius: 50%; background: rgba(99, 102, 241, 0.2); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #818cf8; font-size: 0.85rem;">
-                                            {{ (st.name or 'S')[0] }}
-                                        </div>
+                                        <div class="avatar-placeholder">{{ (st.name or 'S')[0] | upper }}</div>
                                     {% endif %}
                                 </td>
                                 <td><b>{{ st.roll_no }}</b></td>
                                 <td>
-                                    <span style="font-weight: 600; color: white;">{{ st.name }}</span>
+                                    <span style="font-weight: 600; color: #ffffff;">{{ st.name }}</span>
                                     {% if st.manually_corrected %}
-                                        <span style="font-size: 0.7rem; color: #fbbf24; margin-left: 6px; background: rgba(245, 158, 11, 0.15); padding: 2px 6px; border-radius: 4px;" title="Manually modified by teacher"><i class="fa-solid fa-pen"></i> Edited</span>
+                                        <span class="badge badge-warning" style="margin-left: 6px; font-size: 0.7rem; padding: 2px 6px;" title="Manually modified by teacher"><i class="fa-solid fa-pen"></i> Edited</span>
                                     {% endif %}
                                 </td>
-                                <td><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">{{ st.branch }}</span></td>
-                                <td>Sem {{ st.semester }} (Sec {{ st.section }})</td>
+                                <td><span class="badge badge-primary">{{ st.branch }}</span></td>
+                                <td><span style="color: var(--text-muted); font-size: 0.8125rem;">Sem {{ st.semester }} ({{ st.section }})</span></td>
                                 <td>
                                     {% if st.status == 'Present' %}
-                                        <span class="badge badge-success" style="padding: 4px 10px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 5px;">
-                                            <i class="fa-solid fa-circle-check"></i> Present
-                                        </span>
+                                        <span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Present</span>
                                     {% else %}
-                                        <span class="badge badge-danger" style="padding: 4px 10px; font-size: 0.78rem; display: inline-flex; align-items: center; gap: 5px;">
-                                            <i class="fa-solid fa-circle-xmark"></i> Absent
-                                        </span>
+                                        <span class="badge badge-danger"><i class="fa-solid fa-circle-xmark"></i> Absent</span>
                                     {% endif %}
                                 </td>
-                                <td><span style="color: var(--text-muted); font-size: 0.82rem;">{{ st.time or '-' }}</span></td>
+                                <td style="color: var(--text-muted); font-size: 0.8125rem;">{{ st.time }}</td>
                                 <td class="no-print" style="text-align: right;">
-                                    <button type="button" class="btn btn-secondary" onclick="openSessionDetailsModal('{{ session.id }}')" style="padding: 4px 10px; font-size: 0.78rem; border-radius: 6px;">
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="openSessionDetailsModal('{{ session.id }}')" style="padding: 4px 10px; font-size: 0.75rem;">
                                         <i class="fa-solid fa-pen"></i> Edit
                                     </button>
                                 </td>
@@ -240,87 +215,97 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 32px;">No student records found for this session.</td>
+                                <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 32px;">No enrolled students found for this class group.</td>
                             </tr>
                         {% endif %}
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-        {% if corrections %}
-        <!-- Correction Audit Log -->
-        <div class="glass-card animate-fade-in" style="margin-bottom: 32px;">
-            <h3 style="margin: 0 0 16px 0; color: white; display: flex; align-items: center; gap: 8px;">
-                <i class="fa-solid fa-clock-rotate-left" style="color: var(--primary);"></i> Attendance Correction History
-            </h3>
+        <!-- Correction Audit Log Section -->
+        <section class="glass-card animate-fade-in no-print" style="margin-bottom: 28px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <h3 style="margin: 0; color: #ffffff; font-size: 1.05rem; font-weight: 700;">Manual Correction Audit Log</h3>
+                    <p style="color: var(--text-muted); font-size: 0.8125rem; margin: 2px 0 0 0;">Permanent institutional trail for all teacher attendance overrides.</p>
+                </div>
+                <span class="badge badge-neutral">{{ corrections | length }} Modifications</span>
+            </div>
+
             <div class="table-wrapper">
-                <table class="custom-table" style="font-size: 0.85rem;">
+                <table class="custom-table" style="font-size: 0.8125rem;">
                     <thead>
                         <tr>
-                            <th>Date & Time</th>
-                            <th>Student Name</th>
+                            <th>Timestamp</th>
+                            <th>Student</th>
                             <th>Roll No</th>
-                            <th>Status Change</th>
-                            <th>Reason</th>
-                            <th>Modified By</th>
+                            <th>Original Status</th>
+                            <th>Corrected Status</th>
+                            <th>Teacher Reason</th>
+                            <th>Authorized Teacher</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for c in corrections %}
-                        <tr>
-                            <td style="color: var(--text-muted);">{{ c.time }}</td>
-                            <td><b>{{ c.student_name }}</b></td>
-                            <td>{{ c.student_roll }}</td>
-                            <td>
-                                <span class="badge badge-secondary" style="font-size: 0.75rem;">{{ c.original_status }}</span>
-                                <i class="fa-solid fa-arrow-right" style="font-size: 0.7rem; margin: 0 4px; color: var(--text-muted);"></i>
-                                <span class="badge {% if c.updated_status == 'Present' %}badge-success{% else %}badge-danger{% endif %}" style="font-size: 0.75rem;">{{ c.updated_status }}</span>
-                            </td>
-                            <td><i style="color: var(--text-secondary);">"{{ c.reason }}"</i></td>
-                            <td style="color: var(--text-muted);">{{ c.teacher_email }}</td>
-                        </tr>
-                        {% endfor %}
+                        {% if corrections %}
+                            {% for c in corrections %}
+                            <tr>
+                                <td style="color: var(--text-muted);">{{ c.time }}</td>
+                                <td><b style="color: #ffffff;">{{ c.student_name }}</b></td>
+                                <td>{{ c.student_roll }}</td>
+                                <td>
+                                    <span class="badge {% if c.original_status == 'Present' %}badge-success{% else %}badge-danger{% endif %}" style="padding: 2px 6px; font-size: 0.72rem;">{{ c.original_status }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge {% if c.updated_status == 'Present' %}badge-success{% else %}badge-danger{% endif %}" style="padding: 2px 6px; font-size: 0.72rem;">{{ c.updated_status }}</span>
+                                </td>
+                                <td><i style="color: #ffffff;">"{{ c.reason }}"</i></td>
+                                <td style="color: var(--text-muted);">{{ c.teacher_email }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 20px;">No manual corrections recorded for this session.</td>
+                            </tr>
+                        {% endif %}
                     </tbody>
                 </table>
             </div>
-        </div>
-        {% endif %}
+        </section>
 
-    </div>
+    </main>
 </div>
 
-<!-- Include Shared Session Attendance Details Modal -->
+<!-- Shared Session Attendance Details & Management Modal -->
 {% include "teacher/components/session_details_modal.html" %}
 
 <script>
-let pageActiveFilter = 'all';
+let currentFilter = 'all';
 
-function setPageFilter(filter) {
-    pageActiveFilter = filter;
-    ['btnFilterAll', 'btnFilterPresent', 'btnFilterAbsent'].forEach(id => {
-        const btn = document.getElementById(id);
-        if (btn) btn.classList.remove('active');
-    });
-    if (filter === 'all') document.getElementById('btnFilterAll').classList.add('active');
-    if (filter === 'Present') document.getElementById('btnFilterPresent').classList.add('active');
-    if (filter === 'Absent') document.getElementById('btnFilterAbsent').classList.add('active');
+function setPageFilter(status) {
+    currentFilter = status;
+    document.querySelectorAll('.search-filter-row .btn-secondary').forEach(b => b.classList.remove('active'));
+    
+    if (status === 'all') document.getElementById('btnFilterAll').classList.add('active');
+    else if (status === 'Present') document.getElementById('btnFilterPresent').classList.add('active');
+    else if (status === 'Absent') document.getElementById('btnFilterAbsent').classList.add('active');
+    
     filterPageSheet();
 }
 
 function filterPageSheet() {
-    const searchVal = (document.getElementById('pageSheetSearch')?.value || '').toLowerCase().trim();
+    const search = (document.getElementById('pageSheetSearch').value || '').toLowerCase().trim();
     const rows = document.querySelectorAll('.sheet-student-row');
     
     rows.forEach(r => {
         const name = r.getAttribute('data-name') || '';
         const roll = r.getAttribute('data-roll') || '';
         const status = r.getAttribute('data-status') || '';
-
-        const matchesSearch = !searchVal || name.includes(searchVal) || roll.includes(searchVal);
-        const matchesFilter = (pageActiveFilter === 'all') || (status === pageActiveFilter);
-
-        r.style.display = (matchesSearch && matchesFilter) ? '' : 'none';
+        
+        let matchStatus = (currentFilter === 'all' || status === currentFilter);
+        let matchSearch = (!search || name.includes(search) || roll.includes(search));
+        
+        r.style.display = (matchStatus && matchSearch) ? '' : 'none';
     });
 }
 </script>

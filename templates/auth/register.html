@@ -1,53 +1,78 @@
 {% extends "base.html" %}
 
-{% block title %}Register Teacher - Smart Attendance System{% endblock %}
+{% block title %}Register Teacher - Smart Attendance SaaS{% endblock %}
 
 {% block content %}
-<div class="container animate-fade-in" style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px;">
-    <div class="glass-card" style="width: 100%; max-width: 440px; border-radius: 24px; padding: 40px 32px;">
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; position: relative;">
+    
+    <!-- Subtle Ambient Glow -->
+    <div style="position: absolute; width: 400px; height: 400px; background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%); filter: blur(60px); pointer-events: none; z-index: 0;"></div>
+
+    <div class="glass-card animate-fade-in" style="width: 100%; max-width: 420px; border-radius: var(--radius-xl); padding: 40px 32px; border: 1px solid var(--border-light); background: rgba(15, 23, 42, 0.75); box-shadow: var(--shadow-lg); position: relative; z-index: 1;">
         
-        <div style="text-align: center; margin-bottom: 32px;">
-            <div style="display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px; border-radius: 16px; background: linear-gradient(135deg, var(--primary), var(--secondary)); margin-bottom: 16px; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);">
-                <i class="fa-solid fa-graduation-cap" style="font-size: 1.75rem; color: white;"></i>
+        <!-- Branding & Header -->
+        <div style="text-align: center; margin-bottom: 30px;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: var(--radius-lg); background: var(--primary-gradient); margin-bottom: 16px; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.35);">
+                <i class="fa-solid fa-user-shield" style="font-size: 1.5rem; color: #ffffff;"></i>
             </div>
-            <h2 style="font-size: 1.75rem; margin-bottom: 6px; color: white;">Teacher Sign Up</h2>
-            <p style="color: var(--text-secondary); font-size: 0.9rem;">Register a new teacher dashboard</p>
+            <h2 style="font-size: 1.6rem; color: #ffffff; font-weight: 800; margin-bottom: 6px; letter-spacing: -0.025em;">Create Teacher Account</h2>
+            <p style="color: var(--text-secondary); font-size: 0.875rem;">Set up teacher credentials to manage attendance</p>
         </div>
 
         <form action="{{ url_for('auth.register') }}" method="POST">
             <input type="hidden" name="role" value="teacher">
             
             <!-- Email Field -->
-            <div class="form-group">
+            <div class="form-group" style="margin-bottom: 18px;">
                 <label class="form-label" for="email">Work Email</label>
                 <div style="position: relative;">
-                    <i class="fa-regular fa-envelope" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="teacher@school.edu" required style="padding-left: 48px;">
+                    <i class="fa-regular fa-envelope" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.95rem;"></i>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="teacher@school.edu" required autocomplete="email" style="padding-left: 42px; height: 44px;">
                 </div>
             </div>
 
-            <!-- Password Field -->
+            <!-- Password Field with Show/Hide -->
             <div class="form-group" style="margin-bottom: 24px;">
                 <label class="form-label" for="password">Password</label>
                 <div style="position: relative;">
-                    <i class="fa-solid fa-lock" style="position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required style="padding-left: 48px;">
+                    <i class="fa-solid fa-lock" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.95rem;"></i>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required autocomplete="new-password" style="padding-left: 42px; padding-right: 42px; height: 44px;">
+                    <button type="button" onclick="togglePasswordVisibility()" aria-label="Toggle password visibility" style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center;">
+                        <i id="password-toggle-icon" class="fa-regular fa-eye" style="font-size: 0.95rem;"></i>
+                    </button>
                 </div>
             </div>
 
-            <!-- Action Button -->
-            <button type="submit" class="btn btn-primary" style="width: 100%; height: 48px; border-radius: 10px; margin-bottom: 20px;">
-                Register Account <i class="fa-solid fa-user-plus" style="font-size: 0.95rem;"></i>
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary" style="width: 100%; height: 46px; font-size: 0.95rem; margin-bottom: 20px;">
+                <span>Complete Registration</span>
+                <i class="fa-solid fa-arrow-right" style="font-size: 0.85rem;"></i>
             </button>
 
-            <!-- Login Prompt -->
-            <div style="text-align: center; border-top: 1px solid var(--border-glass); padding-top: 20px;">
-                <p style="font-size: 0.85rem; color: var(--text-secondary);">
-                    Already have an account? 
-                    <a href="{{ url_for('auth.login') }}" style="color: var(--primary); text-decoration: none; font-weight: 600;">Sign In</a>
+            <!-- Bottom Prompt -->
+            <div style="text-align: center; border-top: 1px solid var(--border-subtle); padding-top: 20px;">
+                <p style="font-size: 0.8125rem; color: var(--text-muted);">
+                    Already have a teacher account?
+                    <a href="{{ url_for('auth.login') }}" style="color: var(--primary-light); font-weight: 600; text-decoration: none; margin-left: 4px;">Sign In</a>
                 </p>
             </div>
         </form>
     </div>
 </div>
+
+<script>
+function togglePasswordVisibility() {
+    const passwordInput = document.getElementById('password');
+    const icon = document.getElementById('password-toggle-icon');
+    if (!passwordInput) return;
+    
+    if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        icon.className = 'fa-regular fa-eye-slash';
+    } else {
+        passwordInput.type = 'password';
+        icon.className = 'fa-regular fa-eye';
+    }
+}
+</script>
 {% endblock %}

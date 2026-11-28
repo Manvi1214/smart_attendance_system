@@ -1,0 +1,107 @@
+<!-- ==========================================================================
+     REUSABLE TEACHER SIDEBAR COMPONENT
+     Parameters: active_page (e.g. 'dashboard', 'register_student', 'student_management', 
+                 'start_attendance', 'attendance_history', 'reports', 'analytics')
+     ========================================================================== -->
+
+<!-- Mobile Topbar Header -->
+<div class="mobile-topbar">
+    <div style="display: flex; align-items: center; gap: 10px;">
+        <div class="brand-icon" style="width: 32px; height: 32px;">
+            <i class="fa-solid fa-graduation-cap" style="font-size: 0.95rem;"></i>
+        </div>
+        <span style="font-weight: 700; color: white; font-size: 0.95rem;">Smart Attendance</span>
+    </div>
+    <button type="button" class="mobile-toggle-btn" onclick="toggleSidebar()" aria-label="Toggle Navigation">
+        <i class="fa-solid fa-bars"></i>
+    </button>
+</div>
+
+<!-- Backdrop Overlay for Mobile Drawer -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- Main Fixed Sidebar -->
+<aside class="sidebar" id="sidebar-nav">
+    <!-- Brand Identity -->
+    <div class="brand">
+        <div class="brand-icon">
+            <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="brand-text-wrapper">
+            <span class="brand-title">Smart Attendance</span>
+            <span class="brand-subtitle">Teacher Portal</span>
+        </div>
+    </div>
+
+    <!-- Navigation List -->
+    <ul class="nav-menu">
+        <li class="nav-item">
+            <a href="{{ url_for('teacher.dashboard') }}" class="nav-link {% if active_page == 'dashboard' %}active{% endif %}">
+                <i class="fa-solid fa-chart-pie"></i>
+                <span>Dashboard</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('teacher.register_student') }}" class="nav-link {% if active_page == 'register_student' %}active{% endif %}">
+                <i class="fa-solid fa-user-plus"></i>
+                <span>Register Student</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('teacher.student_management') }}" class="nav-link {% if active_page == 'student_management' %}active{% endif %}">
+                <i class="fa-solid fa-users"></i>
+                <span>Student Management</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('teacher.start_attendance') }}" class="nav-link {% if active_page == 'start_attendance' %}active{% endif %}">
+                <i class="fa-solid fa-camera"></i>
+                <span>Start Attendance</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('teacher.attendance_history') }}" class="nav-link {% if active_page == 'attendance_history' %}active{% endif %}">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+                <span>Session History</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('teacher.reports') }}" class="nav-link {% if active_page == 'reports' %}active{% endif %}">
+                <i class="fa-solid fa-file-invoice"></i>
+                <span>Reports Export</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{{ url_for('teacher.analytics') }}" class="nav-link {% if active_page == 'analytics' %}active{% endif %}">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Analytics</span>
+            </a>
+        </li>
+    </ul>
+
+    <!-- Bottom User Profile & Fixed Logout -->
+    <div class="sidebar-footer">
+        <div class="user-profile-badge">
+            <div class="user-avatar">
+                {{ (session.get('name') or session.get('email', 'T'))[0] | upper }}
+            </div>
+            <div class="user-meta">
+                <div class="user-name">{{ session.get('name') or 'Teacher Portal' }}</div>
+                <div class="user-role">{{ session.get('email') or 'teacher@school.edu' }}</div>
+            </div>
+        </div>
+        <a href="{{ url_for('auth.logout') }}" class="logout-link">
+            <i class="fa-solid fa-right-from-bracket"></i>
+            <span>Sign Out</span>
+        </a>
+    </div>
+</aside>
+
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar-nav');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (sidebar) sidebar.classList.toggle('open');
+    if (overlay) overlay.classList.toggle('active');
+}
+</script>

@@ -5,6 +5,7 @@ from database.db_init import db
 auth_bp = Blueprint('auth', __name__, template_folder='../templates')
 
 @auth_bp.route('/login', methods=['GET', 'POST'])
+@auth_bp.route('/auth/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         # API request vs Form submit
@@ -59,6 +60,7 @@ def login():
     return render_template('auth/login.html')
 
 @auth_bp.route('/register', methods=['GET', 'POST'])
+@auth_bp.route('/auth/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         email = request.form.get('email')
@@ -81,6 +83,7 @@ def register():
     return render_template('auth/register.html')
 
 @auth_bp.route('/logout')
+@auth_bp.route('/auth/logout')
 def logout():
     session.clear()
     flash("You have been logged out.", 'info')

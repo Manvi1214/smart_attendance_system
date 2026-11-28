@@ -445,9 +445,9 @@ async function saveAttendanceCorrection(e, studentId) {
             data = await response.json();
         } else {
             const text = await response.text();
-            if (response.status === 401 || response.status === 403 || text.includes('/auth/login') || response.redirected) {
+            if (response.status === 401 || response.status === 403 || text.includes('/login') || response.redirected) {
                 alert('Your session has expired. Please log in again.');
-                window.location.href = '/auth/login';
+                window.location.href = '/login';
                 return;
             }
             throw new Error(`Server returned HTTP ${response.status}`);
@@ -488,6 +488,9 @@ async function saveAttendanceCorrection(e, studentId) {
             }
         } else {
             alert(data.message || 'Failed to update attendance');
+            if (response.status === 401) {
+                window.location.href = '/login';
+            }
         }
     } catch (err) {
         console.error("Save correction error:", err);

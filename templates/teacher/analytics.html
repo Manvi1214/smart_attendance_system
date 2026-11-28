@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 
-{% block title %}Analytics & Defaulters - Smart Attendance System{% endblock %}
+{% block title %}Analytics & Defaulters - Smart Attendance SaaS{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
 <style>
 /* Filter Controls */
 .filter-bar-card {
-    background: rgba(15, 23, 42, 0.55);
-    border: 1px solid var(--border-glass);
-    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
     padding: 16px 20px;
     margin-bottom: 24px;
     display: flex;
@@ -26,21 +26,21 @@
 }
 
 .filter-label {
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: var(--text-secondary);
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     white-space: nowrap;
 }
 
 .filter-select {
-    background: rgba(15, 23, 42, 0.8);
-    border: 1px solid var(--border-glass);
+    background: var(--bg-input);
+    border: 1px solid var(--border-light);
     color: var(--text-primary);
     padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 0.85rem;
+    border-radius: var(--radius-md);
+    font-size: 0.8125rem;
     outline: none;
     transition: var(--transition);
     cursor: pointer;
@@ -48,10 +48,10 @@
 
 .filter-select:focus {
     border-color: var(--primary);
-    box-shadow: 0 0 10px var(--primary-glow);
+    box-shadow: 0 0 0 3px var(--primary-glow);
 }
 
-/* Distribution Chart Card */
+/* Distribution Chart Container */
 .chart-container-box {
     position: relative;
     height: 280px;
@@ -64,16 +64,16 @@
 .view-mode-tabs {
     display: flex;
     gap: 8px;
-    margin-bottom: 16px;
 }
 
 .view-tab-btn {
     background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--border-glass);
+    border: 1px solid var(--border-subtle);
     color: var(--text-secondary);
     padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.82rem;
+    border-radius: var(--radius-full);
+    font-size: 0.8125rem;
+    font-weight: 600;
     cursor: pointer;
     transition: var(--transition);
     display: flex;
@@ -81,16 +81,21 @@
     gap: 6px;
 }
 
+.view-tab-btn:hover {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
 .view-tab-btn.active {
     background: var(--primary);
-    color: white;
+    color: #ffffff;
     border-color: var(--primary);
     box-shadow: 0 2px 8px var(--primary-glow);
 }
 
 .view-tab-btn.danger-active.active {
     background: var(--danger);
-    color: white;
+    color: #ffffff;
     border-color: var(--danger);
     box-shadow: 0 2px 8px var(--danger-glow);
 }
@@ -100,47 +105,31 @@
 {% block content %}
 <div class="dashboard-layout">
     
-    <!-- Sidebar Navigation -->
-    <div class="sidebar">
-        <div class="brand">
-            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
-                <i class="fa-solid fa-graduation-cap" style="font-size: 1.1rem; color: white;"></i>
-            </div>
-            <span class="brand-text">Smart Attendance</span>
-        </div>
-        
-        <ul class="nav-menu">
-            <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
-            <li><a href="{{ url_for('teacher.register_student') }}" class="nav-link"><i class="fa-solid fa-user-plus"></i> Register Student</a></li>
-            <li><a href="{{ url_for('teacher.start_attendance') }}" class="nav-link"><i class="fa-solid fa-camera"></i> Start Attendance</a></li>
-            <li><a href="{{ url_for('teacher.attendance_history') }}" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i> Session History</a></li>
-            <li><a href="{{ url_for('teacher.reports') }}" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Reports Export</a></li>
-            <li><a href="{{ url_for('teacher.analytics') }}" class="nav-link active"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
-        </ul>
-        
-        <div class="nav-logout">
-            <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-        </div>
-    </div>
+    <!-- Unified Sidebar Navigation -->
+    {% set active_page = 'analytics' %}
+    {% include "teacher/components/sidebar.html" %}
 
     <!-- Main Content Panel -->
-    <div class="main-panel">
+    <main class="main-panel">
         
-        <div class="panel-header">
-            <div>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Performance & Alerts</p>
+        <header class="panel-header">
+            <div class="panel-header-text">
+                <p class="panel-subtitle">Institutional Performance & Alerts</p>
                 <h1 class="panel-title">Attendance Analytics & Defaulters</h1>
             </div>
-            <div style="font-size: 0.85rem; color: var(--text-secondary); background: rgba(255,255,255,0.03); border: 1px solid var(--border-glass); padding: 8px 16px; border-radius: 8px;">
-                <i class="fa-solid fa-shield-halved" style="color: var(--primary); margin-right: 6px;"></i> Criteria: <b>75% Mandatory Attendance</b>
+            <div class="panel-header-actions">
+                <div class="date-pill">
+                    <i class="fa-solid fa-shield-halved" style="color: var(--primary-light);"></i>
+                    <span>Threshold: <b>75% Mandatory Attendance</b></span>
+                </div>
             </div>
-        </div>
+        </header>
 
         <!-- Filter Bar: Branch, Section, Semester, Subject -->
-        <div class="filter-bar-card animate-fade-in">
+        <section class="filter-bar-card animate-fade-in">
             <div style="display: flex; flex-wrap: wrap; gap: 14px; align-items: center;">
-                <span style="color: white; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 6px;">
-                    <i class="fa-solid fa-filter" style="color: var(--primary);"></i> Filters:
+                <span style="color: #ffffff; font-weight: 700; font-size: 0.8125rem; display: flex; align-items: center; gap: 6px;">
+                    <i class="fa-solid fa-filter" style="color: var(--primary-light);"></i> Cohort Filters:
                 </span>
 
                 <!-- Branch Filter -->
@@ -189,61 +178,62 @@
             </div>
 
             <div>
-                <button onclick="resetFilters()" class="btn btn-secondary" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 6px;">
+                <button type="button" onclick="resetFilters()" class="btn btn-secondary btn-sm">
                     <i class="fa-solid fa-rotate-left"></i> Reset
                 </button>
             </div>
-        </div>
+        </section>
 
         <!-- Metric KPI Cards -->
-        <div class="stats-grid animate-fade-in" style="margin-bottom: 28px;">
-            <div class="glass-card stat-card primary">
+        <section class="stats-grid animate-fade-in" style="margin-bottom: 24px;">
+            <div class="stat-card primary">
                 <div class="stat-header">
                     <span>Total Students</span>
-                    <i class="fa-solid fa-users" style="color: var(--primary);"></i>
+                    <div class="stat-icon primary"><i class="fa-solid fa-users"></i></div>
                 </div>
                 <div class="stat-value" id="kpi-total">{{ total_students_count }}</div>
-                <div class="stat-footer">Students matching filter</div>
+                <div class="stat-footer">Enrolled in selected cohort</div>
             </div>
 
-            <div class="glass-card stat-card danger">
+            <div class="stat-card danger">
                 <div class="stat-header">
                     <span>Defaulter Students</span>
-                    <i class="fa-solid fa-triangle-exclamation" style="color: var(--danger);"></i>
+                    <div class="stat-icon danger"><i class="fa-solid fa-triangle-exclamation"></i></div>
                 </div>
                 <div class="stat-value" id="kpi-defaulters" style="color: var(--danger);">{{ defaulter_count }}</div>
                 <div class="stat-footer">Attendance strictly &lt; 75%</div>
             </div>
 
-            <div class="glass-card stat-card secondary">
+            <div class="stat-card secondary">
                 <div class="stat-header">
                     <span>Defaulter Ratio</span>
-                    <i class="fa-solid fa-percent" style="color: var(--secondary);"></i>
+                    <div class="stat-icon secondary"><i class="fa-solid fa-percent"></i></div>
                 </div>
-                <div class="stat-value" id="kpi-ratio">{{ defaulter_percentage }}%</div>
-                <div class="stat-footer">Percentage of enrolled cohort</div>
+                <div class="stat-value" id="kpi-ratio" style="color: var(--secondary);">{{ defaulter_percentage }}%</div>
+                <div class="stat-footer">Defaulter to cohort ratio</div>
             </div>
 
-            <div class="glass-card stat-card success">
+            <div class="stat-card success">
                 <div class="stat-header">
                     <span>Eligible Students</span>
-                    <i class="fa-solid fa-circle-check" style="color: var(--success);"></i>
+                    <div class="stat-icon success"><i class="fa-solid fa-circle-check"></i></div>
                 </div>
-                <div class="stat-value" id="kpi-eligible">{{ total_students_count - defaulter_count }}</div>
+                <div class="stat-value" id="kpi-eligible" style="color: var(--success);">{{ total_students_count - defaulter_count }}</div>
                 <div class="stat-footer">Attendance &ge; 75% (Satisfactory)</div>
             </div>
-        </div>
+        </section>
 
         <!-- 2-Column Analytics Visualizations -->
-        <div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; margin-bottom: 32px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
             
             <!-- Attendance Distribution Chart -->
             <div class="glass-card animate-fade-in">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h3 style="color: white; margin: 0; font-size: 1.05rem;">
-                        <i class="fa-solid fa-chart-pie" style="color: var(--primary); margin-right: 8px;"></i> Attendance Distribution
+                <div class="card-header" style="margin-bottom: 14px;">
+                    <h3 class="card-title">
+                        <i class="fa-solid fa-chart-pie" style="color: var(--primary-light);"></i>
+                        <span>Attendance Distribution</span>
                     </h3>
-                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">By Bracket</span>
+                    <span class="badge badge-neutral">By Bracket</span>
                 </div>
                 <div class="chart-container-box">
                     <canvas id="attendance-distribution-chart"></canvas>
@@ -252,43 +242,44 @@
 
             <!-- Subject-wise Low Attendance Analysis -->
             <div class="glass-card animate-fade-in" style="display: flex; flex-direction: column;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                    <h3 style="color: white; margin: 0; font-size: 1.05rem;">
-                        <i class="fa-solid fa-book-open-reader" style="color: var(--secondary); margin-right: 8px;"></i> Subject-wise Low Attendance Analysis
+                <div class="card-header" style="margin-bottom: 14px;">
+                    <h3 class="card-title">
+                        <i class="fa-solid fa-book-open-reader" style="color: var(--secondary);"></i>
+                        <span>Subject Low Attendance Analysis</span>
                     </h3>
-                    <span style="font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">Sorted by Lowest</span>
+                    <span class="badge badge-neutral">Sorted by Lowest</span>
                 </div>
                 
-                <div id="subjectAnalysisContainer" style="overflow-y: auto; max-height: 280px; display: flex; flex-direction: column; gap: 14px; padding-right: 4px;">
+                <div id="subjectAnalysisContainer" style="overflow-y: auto; max-height: 280px; display: flex; flex-direction: column; gap: 12px; padding-right: 4px;">
                     {% if subject_analysis %}
                         {% for sub in subject_analysis %}
-                        <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--border-glass); border-radius: 8px; padding: 12px 14px;">
+                        <div style="background: rgba(10, 15, 29, 0.6); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                                 <div>
-                                    <b style="color: white; font-size: 0.9rem;">{{ sub.subject }}</b>
-                                    <span style="color: var(--text-muted); font-size: 0.78rem; margin-left: 6px;">({{ sub.classes }} finalized classes)</span>
+                                    <b style="color: #ffffff; font-size: 0.875rem;">{{ sub.subject }}</b>
+                                    <span style="color: var(--text-muted); font-size: 0.75rem; margin-left: 6px;">({{ sub.classes }} finalized classes)</span>
                                 </div>
                                 <div style="display: flex; align-items: center; gap: 8px;">
                                     {% if sub.is_low %}
-                                    <span class="badge badge-danger" style="font-size: 0.72rem; padding: 2px 8px;">
+                                    <span class="badge badge-danger" style="font-size: 0.7rem;">
                                         <i class="fa-solid fa-triangle-exclamation"></i> Low Attendance
                                     </span>
                                     {% else %}
-                                    <span class="badge badge-success" style="font-size: 0.72rem; padding: 2px 8px;">Good</span>
+                                    <span class="badge badge-success" style="font-size: 0.7rem;">Good</span>
                                     {% endif %}
-                                    <b style="color: {% if sub.average_percentage < 75 %}var(--danger){% else %}var(--success){% endif %}; font-size: 0.9rem;">
+                                    <b style="color: {% if sub.average_percentage < 75 %}var(--danger){% else %}var(--success){% endif %}; font-size: 0.875rem;">
                                         {{ sub.average_percentage }}%
                                     </b>
                                 </div>
                             </div>
 
                             <!-- Progress Bar -->
-                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 6px;">
+                            <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 6px;">
                                 <div style="width: {{ sub.average_percentage }}%; height: 100%; background: {% if sub.average_percentage < 75 %}var(--danger){% else %}var(--success){% endif %}; border-radius: 3px;"></div>
                             </div>
 
                             <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
-                                <span>Defaulters in subject: <b style="color: {% if sub.defaulters_count > 0 %}var(--danger){% else %}var(--text-secondary){% endif %};">{{ sub.defaulters_count }}</b> students</span>
+                                <span>Defaulters: <b style="color: {% if sub.defaulters_count > 0 %}var(--danger){% else %}var(--text-secondary){% endif %};">{{ sub.defaulters_count }}</b> students</span>
                                 <span>Enrolled: {{ sub.total_enrolled }}</span>
                             </div>
                         </div>
@@ -302,30 +293,30 @@
         </div>
 
         <!-- Defaulter Students Section -->
-        <div id="defaulters" class="glass-card animate-fade-in" style="border: 1.5px solid {% if defaulter_count > 0 %}rgba(239, 68, 68, 0.4){% else %}rgba(16, 185, 129, 0.3){% endif %};">
+        <section id="defaulters" class="glass-card animate-fade-in" style="border: 1px solid {% if defaulter_count > 0 %}rgba(239, 68, 68, 0.35){% else %}var(--border-subtle){% endif %};">
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px;">
                 <div style="display: flex; align-items: center; gap: 12px;">
-                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(239, 68, 68, 0.15); display: flex; align-items: center; justify-content: center; color: var(--danger); box-shadow: 0 4px 12px var(--danger-glow);">
-                        <i class="fa-solid fa-triangle-exclamation" style="font-size: 1.15rem;"></i>
+                    <div style="width: 38px; height: 38px; border-radius: var(--radius-md); background: var(--danger-surface); display: flex; align-items: center; justify-content: center; color: var(--danger);">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
                     </div>
                     <div>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <h3 style="color: white; margin: 0; font-size: 1.15rem; font-weight: 700;">Defaulter Students Section</h3>
-                            <span class="badge badge-danger" id="badgeDefaulterCount" style="font-weight: 700;">{{ defaulter_count }} Defaulters (&lt; 75%)</span>
+                            <h3 style="color: #ffffff; margin: 0; font-size: 1.15rem; font-weight: 700;">Defaulter Student Registry</h3>
+                            <span class="badge badge-danger" id="badgeDefaulterCount">{{ defaulter_count }} Defaulters (&lt; 75%)</span>
                         </div>
-                        <p style="color: var(--text-muted); font-size: 0.82rem; margin: 2px 0 0 0;">
+                        <p style="color: var(--text-muted); font-size: 0.8125rem; margin: 2px 0 0 0;">
                             Student-wise attendance percentage breakdown across applicable finalized sessions.
                         </p>
                     </div>
                 </div>
 
                 <!-- View Mode Tabs (Defaulters Only vs All Students) -->
-                <div class="view-mode-tabs" style="margin-bottom: 0;">
-                    <button class="view-tab-btn danger-active active" id="tabDefaultersOnly" onclick="setViewMode('defaulters')">
+                <div class="view-mode-tabs">
+                    <button type="button" class="view-tab-btn danger-active active" id="tabDefaultersOnly" onclick="setViewMode('defaulters')">
                         <i class="fa-solid fa-triangle-exclamation"></i> Defaulters Only (<span id="defaulterTabCount">{{ defaulter_count }}</span>)
                     </button>
-                    <button class="view-tab-btn" id="tabAllStudents" onclick="setViewMode('all')">
+                    <button type="button" class="view-tab-btn" id="tabAllStudents" onclick="setViewMode('all')">
                         <i class="fa-solid fa-users"></i> All Students (<span id="allTabCount">{{ total_students_count }}</span>)
                     </button>
                 </div>
@@ -333,13 +324,13 @@
 
             <!-- Search input -->
             <div style="position: relative; margin-bottom: 16px;">
-                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted);"></i>
-                <input type="text" id="studentSearchInput" oninput="filterStudentTable()" placeholder="Search by student name or roll number..." class="custom-input" style="padding-left: 38px; width: 100%; font-size: 0.85rem; height: 38px;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8125rem;"></i>
+                <input type="text" id="studentSearchInput" oninput="filterStudentTable()" placeholder="Search by student name or roll number..." class="form-control" style="padding-left: 38px; height: 38px; font-size: 0.85rem;">
             </div>
 
             <!-- Students Attendance Table -->
             <div class="table-wrapper">
-                <table class="custom-table" style="font-size: 0.88rem;">
+                <table class="custom-table" style="font-size: 0.875rem;">
                     <thead>
                         <tr>
                             <th>Roll Number</th>
@@ -360,9 +351,9 @@
                 </table>
             </div>
 
-        </div>
+        </section>
 
-    </div>
+    </main>
 </div>
 {% endblock %}
 
@@ -425,7 +416,7 @@ function initDistributionChart() {
                     }
                 }
             },
-            cutout: '65%'
+            cutout: '68%'
         }
     });
 }
@@ -460,8 +451,8 @@ function renderStudentsTable() {
     if (filtered.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 30px;">
-                    ${currentViewMode === 'defaulters' ? '<i class="fa-solid fa-circle-check" style="color: var(--success); margin-right: 6px;"></i> No defaulter students in this selection.' : 'No students found.'}
+                <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 32px;">
+                    ${currentViewMode === 'defaulters' ? '<i class="fa-solid fa-circle-check" style="color: var(--success); margin-right: 6px;"></i> No defaulter students in this selection.' : 'No students found matching your search.'}
                 </td>
             </tr>
         `;
@@ -474,32 +465,46 @@ function renderStudentsTable() {
         const pct = s.percentage;
         const pctDisplay = s.percentage_display;
 
-        // Highlight in red if below 75%; green if >= 75%; gray if N/A
         let pctStyle = '';
         if (pct === null) {
-            pctStyle = 'background: rgba(100, 116, 139, 0.2); border: 1px solid var(--text-muted); color: var(--text-muted);';
+            pctStyle = 'background: rgba(100, 116, 139, 0.15); border: 1px solid var(--text-muted); color: var(--text-muted);';
         } else if (pct < 75.0) {
-            pctStyle = 'background: rgba(239, 68, 68, 0.28); border: 1.5px solid var(--danger); color: #ffffff; box-shadow: 0 0 10px rgba(239, 68, 68, 0.35);';
+            pctStyle = 'background: var(--danger-surface); border: 1px solid var(--danger-border); color: #ffffff;';
         } else {
-            pctStyle = 'background: rgba(16, 185, 129, 0.2); border: 1px solid var(--success); color: var(--success);';
+            pctStyle = 'background: var(--success-surface); border: 1px solid var(--success-border); color: var(--success);';
         }
 
         let statusBadge = '';
         if (pct === null) {
-            statusBadge = '<span class="badge" style="background: rgba(255,255,255,0.06); color: var(--text-muted);">N/A</span>';
+            statusBadge = '<span class="badge badge-neutral">N/A</span>';
         } else if (isDefaulter) {
-            statusBadge = '<span class="badge badge-danger" style="font-weight: 700;"><i class="fa-solid fa-triangle-exclamation"></i> Defaulter (&lt; 75%)</span>';
+            statusBadge = '<span class="badge badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Defaulter (&lt; 75%)</span>';
         } else {
-            statusBadge = '<span class="badge badge-success" style="font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Eligible (&ge; 75%)</span>';
+            statusBadge = '<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Eligible (&ge; 75%)</span>';
         }
+
+        const initial = (s.name || 'S')[0].toUpperCase();
+        let pSrc = s.photo_path || '';
+        if (pSrc.startsWith('static/')) {
+            pSrc = '/' + pSrc;
+        } else if (pSrc && !pSrc.startsWith('/')) {
+            pSrc = '/static/' + pSrc;
+        }
+
+        const photoHtml = pSrc 
+            ? `<div style="position: relative; width: 32px; height: 32px; display: inline-block;">
+                <img src="${pSrc}" class="face-thumbnail" style="width: 32px; height: 32px;" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';">
+                <div class="avatar-placeholder" style="display: none; width: 32px; height: 32px; font-size: 0.75rem;">${initial}</div>
+               </div>`
+            : `<div class="avatar-placeholder" style="width: 32px; height: 32px; font-size: 0.75rem;">${initial}</div>`;
 
         html += `
             <tr>
                 <td><b style="color: var(--secondary);">${s.roll_no}</b></td>
                 <td>
                     <div style="display: flex; align-items: center; gap: 10px;">
-                        <img src="/${s.photo_path}" class="face-thumbnail" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;" onerror="this.src='/static/images/default_profile.png'">
-                        <b style="color: var(--text-primary);">${s.name}</b>
+                        ${photoHtml}
+                        <b style="color: #ffffff;">${s.name}</b>
                     </div>
                 </td>
                 <td><span style="color: var(--text-secondary);">${s.branch} - ${s.section}</span></td>
@@ -508,14 +513,13 @@ function renderStudentsTable() {
                 <td><b style="color: var(--success);">${s.present_sessions}</b></td>
                 <td><b style="color: var(--danger);">${s.absent_sessions}</b></td>
                 <td>
-                    <!-- Highlighted Attendance Percentage -->
-                    <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-weight: 800; font-size: 0.85rem; ${pctStyle}">
+                    <span style="display: inline-block; padding: 3px 10px; border-radius: 6px; font-weight: 700; font-size: 0.8125rem; ${pctStyle}">
                         ${pctDisplay}
                     </span>
                 </td>
                 <td>${statusBadge}</td>
                 <td style="text-align: right;">
-                    <a href="/reports/export/pdf/${s.id}" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.75rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;">
+                    <a href="/reports/export/pdf/${s.id}" class="btn btn-secondary btn-sm" style="padding: 4px 10px; font-size: 0.75rem;">
                         <i class="fa-solid fa-file-pdf"></i> Report
                     </a>
                 </td>
@@ -597,28 +601,28 @@ function renderSubjectAnalysis(analysisList) {
         const isLow = sub.is_low;
         const color = sub.average_percentage < 75 ? 'var(--danger)' : 'var(--success)';
         const badge = isLow ? 
-            '<span class="badge badge-danger" style="font-size: 0.72rem; padding: 2px 8px;"><i class="fa-solid fa-triangle-exclamation"></i> Low Attendance</span>' :
-            '<span class="badge badge-success" style="font-size: 0.72rem; padding: 2px 8px;">Good</span>';
+            '<span class="badge badge-danger" style="font-size: 0.7rem;"><i class="fa-solid fa-triangle-exclamation"></i> Low Attendance</span>' :
+            '<span class="badge badge-success" style="font-size: 0.7rem;">Good</span>';
 
         html += `
-            <div style="background: rgba(15, 23, 42, 0.45); border: 1px solid var(--border-glass); border-radius: 8px; padding: 12px 14px;">
+            <div style="background: rgba(10, 15, 29, 0.6); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px 14px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                     <div>
-                        <b style="color: white; font-size: 0.9rem;">${sub.subject}</b>
-                        <span style="color: var(--text-muted); font-size: 0.78rem; margin-left: 6px;">(${sub.classes} finalized classes)</span>
+                        <b style="color: #ffffff; font-size: 0.875rem;">${sub.subject}</b>
+                        <span style="color: var(--text-muted); font-size: 0.75rem; margin-left: 6px;">(${sub.classes} finalized classes)</span>
                     </div>
                     <div style="display: flex; align-items: center; gap: 8px;">
                         ${badge}
-                        <b style="color: ${color}; font-size: 0.9rem;">${sub.average_percentage}%</b>
+                        <b style="color: ${color}; font-size: 0.875rem;">${sub.average_percentage}%</b>
                     </div>
                 </div>
 
-                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.05); border-radius: 3px; overflow: hidden; margin-bottom: 6px;">
+                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-bottom: 6px;">
                     <div style="width: ${sub.average_percentage}%; height: 100%; background: ${color}; border-radius: 3px;"></div>
                 </div>
 
                 <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-muted);">
-                    <span>Defaulters in subject: <b style="color: ${sub.defaulters_count > 0 ? 'var(--danger)' : 'var(--text-secondary)'};">${sub.defaulters_count}</b> students</span>
+                    <span>Defaulters: <b style="color: ${sub.defaulters_count > 0 ? 'var(--danger)' : 'var(--text-secondary)'};">${sub.defaulters_count}</b> students</span>
                     <span>Enrolled: ${sub.total_enrolled}</span>
                 </div>
             </div>

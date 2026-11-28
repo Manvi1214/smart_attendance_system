@@ -25,6 +25,8 @@ _reg_sessions = {}
 def login_required_teacher(f):
     def wrapper(*args, **kwargs):
         if 'role' not in session or session['role'] != 'teacher':
+            if request.is_json or request.path.startswith('/teacher/api/') or 'application/json' in request.headers.get('Accept', ''):
+                return jsonify({"success": False, "message": "Unauthorized or session expired. Please log in again."}), 401
             flash("Unauthorized. Please log in as a teacher.", "danger")
             return redirect(url_for('auth.login'))
         return f(*args, **kwargs)

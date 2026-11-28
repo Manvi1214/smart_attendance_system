@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Student Management - Smart Attendance System{% endblock %}
+{% block title %}Student Management - Smart Attendance SaaS{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
@@ -9,58 +9,44 @@
 {% block content %}
 <div class="dashboard-layout">
     
-    <!-- Sidebar Navigation -->
-    <div class="sidebar">
-        <div class="brand">
-            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
-                <i class="fa-solid fa-graduation-cap" style="font-size: 1.1rem; color: white;"></i>
-            </div>
-            <span class="brand-text">Smart Attendance</span>
-        </div>
-        
-        <ul class="nav-menu">
-            <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
-            <li><a href="{{ url_for('teacher.student_management') }}" class="nav-link active"><i class="fa-solid fa-users"></i> Student Management</a></li>
-            <li><a href="{{ url_for('teacher.register_student') }}" class="nav-link"><i class="fa-solid fa-user-plus"></i> Register Student</a></li>
-            <li><a href="{{ url_for('teacher.start_attendance') }}" class="nav-link"><i class="fa-solid fa-camera"></i> Start Attendance</a></li>
-            <li><a href="{{ url_for('teacher.attendance_history') }}" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i> Session History</a></li>
-            <li><a href="{{ url_for('teacher.reports') }}" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Reports Export</a></li>
-            <li><a href="{{ url_for('teacher.analytics') }}" class="nav-link"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
-        </ul>
-        
-        <div class="nav-logout">
-            <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-        </div>
-    </div>
+    <!-- Unified Sidebar Navigation -->
+    {% set active_page = 'student_management' %}
+    {% include "teacher/components/sidebar.html" %}
 
     <!-- Main Content Panel -->
-    <div class="main-panel">
+    <main class="main-panel">
         
-        <div class="panel-header">
-            <div>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Student Directory</p>
-                <h1 class="panel-title">Branch & Section Student Management</h1>
+        <header class="panel-header">
+            <div class="panel-header-text">
+                <p class="panel-subtitle">Student Directory & Academic Division</p>
+                <h1 class="panel-title">Student Management</h1>
             </div>
-            <div style="display: flex; gap: 10px;">
-                <a href="{{ url_for('teacher.register_student') }}" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
-                    <i class="fa-solid fa-user-plus"></i> Register New Student
+            <div class="panel-header-actions">
+                <a href="{{ url_for('teacher.register_student') }}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-user-plus"></i>
+                    <span>Register New Student</span>
                 </a>
             </div>
-        </div>
+        </header>
 
-        <!-- Filter Card -->
-        <div class="glass-card animate-fade-in" style="margin-bottom: 24px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 10px;">
-                <h3 style="margin: 0; color: white; font-size: 1.15rem;">Filter Students by Class & Group</h3>
-                <span style="font-size: 0.85rem; color: var(--text-muted);">
-                    Showing <b id="displayed-students-count" style="color: var(--secondary);">{{ students | length }}</b> of {{ students | length }} total students
+        <!-- Filter & Search Toolbar Card -->
+        <section class="glass-card animate-fade-in" style="margin-bottom: 24px; padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; flex-wrap: wrap; gap: 10px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-filter" style="color: var(--primary-light); font-size: 0.95rem;"></i>
+                    <h3 style="margin: 0; color: #ffffff; font-size: 1.05rem; font-weight: 700;">Filter Students by Class & Group</h3>
+                </div>
+                <span style="font-size: 0.8125rem; color: var(--text-muted);">
+                    Showing <b id="displayed-students-count" style="color: var(--secondary);">{{ students | length }}</b> of {{ students | length }} enrolled students
                 </span>
             </div>
 
-            <div style="display: flex; flex-wrap: wrap; gap: 12px; align-items: center; background: rgba(15, 23, 42, 0.5); padding: 16px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.06);">
-                <div style="min-width: 140px; flex: 1;">
-                    <label style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Branch</label>
-                    <select id="filter-branch" onchange="applyStudentFilters()" class="form-control" style="height: 38px; font-size: 0.85rem; background: rgba(15, 23, 42, 0.8); color: white;">
+            <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; background: rgba(10, 15, 29, 0.6); padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                
+                <!-- Branch -->
+                <div style="min-width: 130px; flex: 1;">
+                    <label class="form-label" style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 3px;">Branch</label>
+                    <select id="filter-branch" onchange="applyStudentFilters()" class="form-control" style="height: 36px; font-size: 0.8125rem;">
                         <option value="all">All Branches</option>
                         <option value="CSE">CSE</option>
                         <option value="IT">IT</option>
@@ -75,9 +61,10 @@
                     </select>
                 </div>
 
-                <div style="min-width: 130px; flex: 1;">
-                    <label style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Semester</label>
-                    <select id="filter-semester" onchange="applyStudentFilters()" class="form-control" style="height: 38px; font-size: 0.85rem; background: rgba(15, 23, 42, 0.8); color: white;">
+                <!-- Semester -->
+                <div style="min-width: 120px; flex: 1;">
+                    <label class="form-label" style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 3px;">Semester</label>
+                    <select id="filter-semester" onchange="applyStudentFilters()" class="form-control" style="height: 36px; font-size: 0.8125rem;">
                         <option value="all">All Semesters</option>
                         <option value="1">1st Semester</option>
                         <option value="2">2nd Semester</option>
@@ -90,9 +77,10 @@
                     </select>
                 </div>
 
-                <div style="min-width: 120px; flex: 1;">
-                    <label style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Section</label>
-                    <select id="filter-section" onchange="applyStudentFilters()" class="form-control" style="height: 38px; font-size: 0.85rem; background: rgba(15, 23, 42, 0.8); color: white;">
+                <!-- Section -->
+                <div style="min-width: 110px; flex: 1;">
+                    <label class="form-label" style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 3px;">Section</label>
+                    <select id="filter-section" onchange="applyStudentFilters()" class="form-control" style="height: 36px; font-size: 0.8125rem;">
                         <option value="all">All Sections</option>
                         <option value="A">Section A</option>
                         <option value="B">Section B</option>
@@ -101,9 +89,10 @@
                     </select>
                 </div>
 
-                <div style="min-width: 140px; flex: 1;">
-                    <label style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Subject</label>
-                    <select id="filter-subject" onchange="applyStudentFilters()" class="form-control" style="height: 38px; font-size: 0.85rem; background: rgba(15, 23, 42, 0.8); color: white;">
+                <!-- Subject -->
+                <div style="min-width: 130px; flex: 1;">
+                    <label class="form-label" style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 3px;">Subject</label>
+                    <select id="filter-subject" onchange="applyStudentFilters()" class="form-control" style="height: 36px; font-size: 0.8125rem;">
                         <option value="all">All Subjects</option>
                         {% for subj in subjects %}
                         <option value="{{ subj }}">{{ subj }}</option>
@@ -111,21 +100,25 @@
                     </select>
                 </div>
 
-                <div style="min-width: 180px; flex: 1.4;">
-                    <label style="font-size: 0.72rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px;">Search Student</label>
-                    <input type="text" id="filter-search" oninput="applyStudentFilters()" placeholder="Search by name, roll number, email..." class="form-control" style="height: 38px; font-size: 0.85rem;">
+                <!-- Search -->
+                <div style="min-width: 180px; flex: 1.5;">
+                    <label class="form-label" style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 3px;">Search Student</label>
+                    <div style="position: relative;">
+                        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem;"></i>
+                        <input type="text" id="filter-search" oninput="applyStudentFilters()" placeholder="Name, roll number, email..." class="form-control" style="height: 36px; font-size: 0.8125rem; padding-left: 32px;">
+                    </div>
                 </div>
 
                 <div style="align-self: flex-end;">
-                    <button onclick="resetStudentFilters()" class="btn btn-secondary" style="height: 38px; font-size: 0.85rem; padding: 0 16px; border-radius: 6px; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;">
+                    <button type="button" onclick="resetStudentFilters()" class="btn btn-secondary btn-sm" style="height: 36px;">
                         <i class="fa-solid fa-rotate-left"></i> Reset
                     </button>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <!-- Student Roster Table -->
-        <div class="glass-card animate-fade-in">
+        <!-- Student Roster Table Card -->
+        <section class="glass-card animate-fade-in">
             <div class="table-wrapper">
                 <table class="custom-table">
                     <thead>
@@ -137,8 +130,8 @@
                             <th>Section</th>
                             <th>Semester</th>
                             <th>Subject</th>
-                            <th>Contact</th>
-                            <th>Actions</th>
+                            <th>Contact Details</th>
+                            <th style="text-align: right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="students-table-body">
@@ -152,28 +145,39 @@
                                 data-subject="{{ student.subject | default('') | lower }}"
                                 data-search="{{ student.name | lower }} {{ student.roll_no | lower }} {{ student.email | default('') | lower }} {{ student.phone | default('') | lower }}">
                                 <td>
-                                    <img src="/{{ student.photo_path }}" class="face-thumbnail" onerror="this.src='/static/images/default_profile.png'">
+                                    {% set p_src = '/' + student.photo_path if (student.photo_path and student.photo_path.startswith('static/')) else ('/static/' + student.photo_path if student.photo_path else '') %}
+                                    {% if p_src %}
+                                        <img src="{{ p_src }}" class="face-thumbnail" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='inline-flex';">
+                                        <div class="avatar-placeholder" style="display: none;">{{ (student.name or 'S')[0] | upper }}</div>
+                                    {% else %}
+                                        <div class="avatar-placeholder">{{ (student.name or 'S')[0] | upper }}</div>
+                                    {% endif %}
                                 </td>
                                 <td><b style="color: var(--secondary);">{{ student.roll_no }}</b></td>
                                 <td><b style="color: var(--text-primary);">{{ student.name }}</b></td>
-                                <td><span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 600;">{{ student.branch }}</span></td>
-                                <td><span class="badge" style="background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 600;">Sec {{ student.section }}</span></td>
+                                <td><span class="badge badge-primary">{{ student.branch }}</span></td>
+                                <td><span class="badge badge-secondary">Sec {{ student.section }}</span></td>
                                 <td>Semester {{ student.semester }}</td>
                                 <td>
                                     {% if student.subject %}
-                                        <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: var(--success);">{{ student.subject }}</span>
+                                        <span class="badge badge-success">{{ student.subject }}</span>
                                     {% else %}
                                         <span style="color: var(--text-muted);">-</span>
                                     {% endif %}
                                 </td>
-                                <td style="font-size: 0.8rem; color: var(--text-muted);">
-                                    {% if student.email %}<div><i class="fa-regular fa-envelope"></i> {{ student.email }}</div>{% endif %}
-                                    {% if student.phone %}<div><i class="fa-solid fa-phone"></i> {{ student.phone }}</div>{% endif %}
+                                <td style="font-size: 0.78rem; color: var(--text-muted);">
+                                    {% if student.email %}<div><i class="fa-regular fa-envelope" style="width: 14px;"></i> {{ student.email }}</div>{% endif %}
+                                    {% if student.phone %}<div><i class="fa-solid fa-phone" style="width: 14px;"></i> {{ student.phone }}</div>{% endif %}
                                 </td>
-                                <td>
-                                    <button onclick="removeStudent('{{ student.id_str }}', '{{ student.name }}')" class="btn btn-danger" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
-                                        <i class="fa-solid fa-trash-can"></i> Remove
-                                    </button>
+                                <td style="text-align: right;">
+                                    <div style="display: inline-flex; gap: 6px; align-items: center;">
+                                        <a href="/reports/export/pdf/{{ student.id_str }}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem;" title="Download Student Attendance PDF">
+                                            <i class="fa-solid fa-file-pdf"></i> PDF
+                                        </a>
+                                        <button onclick="removeStudent('{{ student.id_str }}', '{{ student.name }}')" class="btn btn-danger btn-sm" style="padding: 4px 8px; font-size: 0.75rem;" title="Delete Student Record">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             {% endfor %}
@@ -185,9 +189,9 @@
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-    </div>
+    </main>
 </div>
 {% endblock %}
 

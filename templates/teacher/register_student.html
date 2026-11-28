@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Register Student - Smart Attendance System{% endblock %}
+{% block title %}Register Student - Smart Attendance SaaS{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
@@ -9,74 +9,86 @@
 {% block content %}
 <div class="dashboard-layout">
     
-    <!-- Sidebar Navigation -->
-    <div class="sidebar">
-        <div class="brand">
-            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
-                <i class="fa-solid fa-graduation-cap" style="font-size: 1.1rem; color: white;"></i>
-            </div>
-            <span class="brand-text">Smart Attendance</span>
-        </div>
-        
-        <ul class="nav-menu">
-            <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
-            <li><a href="{{ url_for('teacher.register_student') }}" class="nav-link active"><i class="fa-solid fa-user-plus"></i> Register Student</a></li>
-            <li><a href="{{ url_for('teacher.start_attendance') }}" class="nav-link"><i class="fa-solid fa-camera"></i> Start Attendance</a></li>
-            <li><a href="{{ url_for('teacher.attendance_history') }}" class="nav-link"><i class="fa-solid fa-clock-rotate-left"></i> Session History</a></li>
-            <li><a href="{{ url_for('teacher.reports') }}" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Reports Export</a></li>
-            <li><a href="{{ url_for('teacher.analytics') }}" class="nav-link"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
-        </ul>
-        
-        <div class="nav-logout">
-            <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-        </div>
-    </div>
+    <!-- Unified Sidebar Navigation -->
+    {% set active_page = 'register_student' %}
+    {% include "teacher/components/sidebar.html" %}
 
     <!-- Main Content Panel -->
-    <div class="main-panel">
+    <main class="main-panel">
         
-        <div class="panel-header">
-            <div>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Student Registry</p>
-                <h1 class="panel-title">Add New Student Profile</h1>
+        <header class="panel-header">
+            <div class="panel-header-text">
+                <p class="panel-subtitle">Student Enrollment</p>
+                <h1 class="panel-title">Register New Student</h1>
             </div>
-        </div>
+            <div class="panel-header-actions">
+                <a href="{{ url_for('teacher.student_management') }}" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-users"></i>
+                    <span>View Student Directory</span>
+                </a>
+            </div>
+        </header>
 
-        <div style="max-width: 680px; margin: 0 auto;">
+        <!-- Centered Container -->
+        <div style="max-width: 760px; margin: 0 auto;">
             
-            <!-- Registration Details Card -->
+            <!-- Step Progression Header -->
+            <div style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 24px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span id="step-num-1" style="width: 28px; height: 28px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 0.8125rem; font-weight: 700;">1</span>
+                    <span style="font-size: 0.875rem; font-weight: 600; color: #ffffff;">Student Details</span>
+                </div>
+                <div style="width: 48px; height: 1px; background: var(--border-light);"></div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span id="step-num-2" style="width: 28px; height: 28px; border-radius: 50%; background: rgba(255, 255, 255, 0.08); color: var(--text-muted); display: flex; align-items: center; justify-content: center; font-size: 0.8125rem; font-weight: 700;">2</span>
+                    <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-muted);">Biometric Face Capture</span>
+                </div>
+            </div>
+
+            <!-- Registration Details Card (Step 1) -->
             <div class="glass-card animate-fade-in" id="registration-fields-card">
-                <h3 style="margin-bottom: 24px; color: white;">Student Details</h3>
+                <div class="card-header" style="margin-bottom: 20px;">
+                    <div>
+                        <h3 class="card-title">
+                            <i class="fa-solid fa-id-card" style="color: var(--primary-light);"></i>
+                            <span>Student Academic & Personal Details</span>
+                        </h3>
+                        <p class="card-subtitle">Fill in student identifiers to link attendance records and portal accounts</p>
+                    </div>
+                </div>
                 
                 <form id="student-registration-form">
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                        <div class="form-group">
-                            <label class="form-label" for="reg-name">Full Name</label>
-                            <input type="text" id="reg-name" class="form-control" placeholder="e.g. Krish Gupta" required>
+                    
+                    <!-- Name & Roll Number -->
+                    <div style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; margin-bottom: 16px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="reg-name">Full Student Name <span style="color: var(--danger);">*</span></label>
+                            <input type="text" id="reg-name" class="form-control" placeholder="e.g. Krish Gupta" required autocomplete="name">
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="reg-roll">Roll Number / ID</label>
-                            <input type="text" id="reg-roll" class="form-control" placeholder="e.g. 101" required>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="reg-roll">Roll Number / Student ID <span style="color: var(--danger);">*</span></label>
+                            <input type="text" id="reg-roll" class="form-control" placeholder="e.g. 101" required autocomplete="off">
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 16px;">
-                        <div class="form-group">
-                            <label class="form-label" for="reg-branch">Branch</label>
-                            <select id="reg-branch" class="form-control" required style="height: 44px; background: rgba(15, 23, 42, 0.7); color: white;">
+                    <!-- Academic Classification Grid -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 16px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="reg-branch">Branch <span style="color: var(--danger);">*</span></label>
+                            <select id="reg-branch" class="form-control" required>
                                 <option value="" disabled selected>Select Branch</option>
-                                <option value="CSE">CSE</option>
-                                <option value="IT">IT</option>
-                                <option value="ECE">ECE</option>
-                                <option value="ME">ME</option>
-                                <option value="CE">CE</option>
-                                <option value="EE">EE</option>
-                                <option value="AI">AI/ML</option>
+                                <option value="CSE">CSE (Computer Science)</option>
+                                <option value="IT">IT (Information Tech)</option>
+                                <option value="ECE">ECE (Electronics)</option>
+                                <option value="ME">ME (Mechanical)</option>
+                                <option value="CE">CE (Civil)</option>
+                                <option value="EE">EE (Electrical)</option>
+                                <option value="AI">AI/ML (Artificial Intelligence)</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="reg-section">Section</label>
-                            <select id="reg-section" class="form-control" required style="height: 44px; background: rgba(15, 23, 42, 0.7); color: white;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="reg-section">Section <span style="color: var(--danger);">*</span></label>
+                            <select id="reg-section" class="form-control" required>
                                 <option value="" disabled selected>Select Section</option>
                                 <option value="A">Section A</option>
                                 <option value="B">Section B</option>
@@ -84,9 +96,9 @@
                                 <option value="D">Section D</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="reg-semester">Semester</label>
-                            <select id="reg-semester" class="form-control" required style="height: 44px; background: rgba(15, 23, 42, 0.7); color: white;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="reg-semester">Semester <span style="color: var(--danger);">*</span></label>
+                            <select id="reg-semester" class="form-control" required>
                                 <option value="" disabled selected>Select Semester</option>
                                 <option value="1">1st Semester</option>
                                 <option value="2">2nd Semester</option>
@@ -98,55 +110,78 @@
                                 <option value="8">8th Semester</option>
                             </select>
                         </div>
-                        <div class="form-group">
-                            <label class="form-label" for="reg-subject">Subject (Optional)</label>
-                            <input type="text" id="reg-subject" class="form-control" placeholder="e.g. DBMS, ML" style="height: 44px;">
+                    </div>
+
+                    <!-- Optional Subject -->
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label" for="reg-subject">Primary Enrolled Subject <span style="color: var(--text-muted); font-weight: 400;">(Optional)</span></label>
+                        <input type="text" id="reg-subject" class="form-control" placeholder="e.g. Database Management Systems, Machine Learning">
+                    </div>
+
+                    <!-- Contact Details (Email & Phone) -->
+                    <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; border-top: 1px solid var(--border-subtle); padding-top: 20px; margin-bottom: 24px;">
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="reg-email">Student Login Email <span style="color: var(--danger);">*</span></label>
+                            <input type="email" id="reg-email" class="form-control" placeholder="student@school.edu" required autocomplete="email">
+                            <span class="form-helper">Used for the student attendance portal login</span>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label class="form-label" for="reg-phone">Contact Phone Number <span style="color: var(--danger);">*</span></label>
+                            <input type="tel" id="reg-phone" class="form-control" placeholder="+91 9876543210" required autocomplete="tel">
+                            <span class="form-helper">For institutional alerts</span>
                         </div>
                     </div>
 
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; border-top: 1px solid var(--border-glass); padding-top: 20px; margin-top: 10px;">
-                        <div class="form-group">
-                            <label class="form-label" for="reg-email">Login Email (For Student Dashboard)</label>
-                            <input type="email" id="reg-email" class="form-control" placeholder="student@school.edu" required>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="reg-phone">Phone Number</label>
-                            <input type="tel" id="reg-phone" class="form-control" placeholder="e.g. +91 9876543210" required>
-                        </div>
-                    </div>
-
-                    <div style="margin-top: 24px; text-align: right;">
-                        <button type="button" id="btn-start-capture" class="btn btn-primary" style="height: 46px;">
-                            Continue to Face Capture <i class="fa-solid fa-camera"></i>
+                    <!-- Form Action Buttons -->
+                    <div style="display: flex; justify-content: flex-end; gap: 12px; align-items: center;">
+                        <button type="reset" class="btn btn-secondary">
+                            <i class="fa-solid fa-rotate-left"></i>
+                            <span>Clear Fields</span>
+                        </button>
+                        <button type="button" id="btn-start-capture" class="btn btn-primary" style="height: 44px; padding: 0 22px;">
+                            <span>Continue to Face Capture</span>
+                            <i class="fa-solid fa-camera"></i>
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- Webcam Image Capture Card (Hidden Initially) -->
-            <div class="glass-card animate-fade-in" id="registration-webcam-card" style="display: none; border-color: var(--primary);">
-                <div style="text-align: center; margin-bottom: 20px;">
-                    <h3 style="color: white; margin-bottom: 6px;">Biometric Facial Enrollment</h3>
-                    <p style="color: var(--text-secondary); font-size: 0.9rem;">Follow the on-screen instructions to enroll facial biometric markers.</p>
+            <!-- Webcam Image Capture Card (Step 2 - Hidden Initially) -->
+            <div class="glass-card animate-fade-in" id="registration-webcam-card" style="display: none; border: 1.5px solid var(--primary-border);">
+                
+                <div class="card-header" style="margin-bottom: 16px;">
+                    <div>
+                        <h3 class="card-title">
+                            <i class="fa-solid fa-camera" style="color: var(--primary-light);"></i>
+                            <span>Biometric Facial Enrollment</span>
+                        </h3>
+                        <p class="card-subtitle">Keep student centered in the camera to extract facial vector embeddings</p>
+                    </div>
+                    <span class="badge badge-primary">Step 2 of 2</span>
                 </div>
                 
                 <!-- On-screen Challenge Prompt -->
-                <div id="capture-direction-prompt" style="font-family: 'Outfit', sans-serif; font-size: 1.15rem; font-weight: 700; text-align: center; margin: 16px 0; min-height: 28px; color: var(--primary);">
-                    Align face to webcam...
+                <div id="capture-direction-prompt" style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 1.1rem; font-weight: 700; text-align: center; margin: 12px 0 16px; min-height: 28px; color: var(--primary-light);">
+                    Align student face with webcam...
                 </div>
 
-                <!-- Webcam container -->
-                <div class="webcam-container" style="max-width: 520px; margin: 0 auto 20px;">
+                <!-- Webcam Feed Container with Alignment Guide Overlay -->
+                <div class="webcam-container" style="max-width: 520px; margin: 0 auto 20px; border-radius: var(--radius-lg); position: relative;">
                     <video id="reg-webcam-video" class="webcam-feed" autoplay playsinline></video>
+                    
+                    <!-- Guide Frame -->
+                    <div style="position: absolute; inset: 12%; border: 2px dashed rgba(99, 102, 241, 0.45); border-radius: 50%; pointer-events: none; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 0.75rem; color: rgba(255, 255, 255, 0.5); background: rgba(0,0,0,0.4); padding: 2px 8px; border-radius: 4px;">Face Center</span>
+                    </div>
                 </div>
 
-                <!-- Progress fill bar -->
-                <div style="width: 100%; max-width: 520px; margin: 0 auto;">
-                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 8px;">
+                <!-- Progress Fill Bar -->
+                <div style="width: 100%; max-width: 520px; margin: 0 auto 10px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8125rem; color: var(--text-secondary); margin-bottom: 8px;">
                         <span id="capture-progress-text">Enrolling biometric signatures...</span>
                     </div>
-                    <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-glass);">
-                        <div id="capture-progress-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.2s ease;"></div>
+                    <div style="width: 100%; height: 8px; background: rgba(255, 255, 255, 0.06); border-radius: 4px; overflow: hidden; border: 1px solid var(--border-subtle);">
+                        <div id="capture-progress-fill" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); transition: width 0.25s ease;"></div>
                     </div>
                 </div>
 
@@ -154,7 +189,7 @@
 
         </div>
 
-    </div>
+    </main>
 </div>
 {% endblock %}
 

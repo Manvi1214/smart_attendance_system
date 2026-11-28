@@ -1,244 +1,47 @@
 {% extends "base.html" %}
 
-{% block title %}Session History - Smart Attendance System{% endblock %}
+{% block title %}Session History - Smart Attendance SaaS{% endblock %}
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
-<style>
-/* Modal Glassmorphic Styling */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(9, 13, 22, 0.78);
-    backdrop-filter: blur(8px);
-    z-index: 1050;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    box-sizing: border-box;
-}
-
-.modal-dialog-card {
-    background: #0d1527;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 16px;
-    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.6);
-    width: 100%;
-    max-width: 960px;
-    max-height: 90vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    animation: modalScaleIn 0.25s ease-out forwards;
-}
-
-@keyframes modalScaleIn {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-.modal-card-header {
-    padding: 20px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: rgba(15, 23, 42, 0.6);
-}
-
-.modal-card-body {
-    padding: 24px;
-    overflow-y: auto;
-    flex: 1;
-}
-
-.modal-close-btn {
-    background: transparent;
-    border: none;
-    color: var(--text-muted);
-    font-size: 1.5rem;
-    cursor: pointer;
-    line-height: 1;
-    padding: 4px 8px;
-    border-radius: 8px;
-    transition: var(--transition);
-}
-
-.modal-close-btn:hover {
-    color: var(--danger);
-    background: rgba(239, 68, 68, 0.1);
-}
-
-/* Modal Stats Grid */
-.modal-stats-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-    margin-bottom: 24px;
-}
-
-.modal-stat-box {
-    background: rgba(15, 23, 42, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.06);
-    border-radius: 12px;
-    padding: 14px 16px;
-    text-align: center;
-}
-
-.modal-stat-val {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 4px;
-    font-family: 'Outfit', sans-serif;
-}
-
-.modal-stat-lbl {
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-muted);
-}
-
-/* Tabs */
-.modal-nav-tabs {
-    display: flex;
-    gap: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    margin-bottom: 20px;
-}
-
-.modal-tab-btn {
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid transparent;
-    color: var(--text-muted);
-    padding: 10px 18px;
-    font-size: 0.9rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.modal-tab-btn:hover {
-    color: var(--text-primary);
-}
-
-.modal-tab-btn.active {
-    color: var(--primary);
-    border-bottom-color: var(--primary);
-}
-
-/* Filter pills */
-.filter-pill {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-secondary);
-    padding: 6px 14px;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: var(--transition);
-}
-
-.filter-pill:hover, .filter-pill.active {
-    background: var(--primary);
-    color: white;
-    border-color: var(--primary);
-}
-
-/* Inline Edit Card */
-.inline-edit-card {
-    background: rgba(30, 41, 59, 0.75);
-    border: 1px solid rgba(99, 102, 241, 0.35);
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-top: 10px;
-    animation: fadeIn 0.2s ease-in;
-}
-
-.status-choice-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 16px;
-    border-radius: 8px;
-    font-size: 0.82rem;
-    font-weight: 600;
-    cursor: pointer;
-    border: 1.5px solid transparent;
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-secondary);
-    transition: var(--transition);
-}
-
-.status-choice-btn.selected-present {
-    background: rgba(16, 185, 129, 0.2);
-    border-color: var(--success);
-    color: var(--success);
-}
-
-.status-choice-btn.selected-absent {
-    background: rgba(239, 68, 68, 0.2);
-    border-color: var(--danger);
-    color: var(--danger);
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-</style>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-layout">
     
-    <!-- Sidebar Navigation -->
-    <div class="sidebar">
-        <div class="brand">
-            <div style="width: 36px; height: 36px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px var(--primary-glow);">
-                <i class="fa-solid fa-graduation-cap" style="font-size: 1.1rem; color: white;"></i>
-            </div>
-            <span class="brand-text">Smart Attendance</span>
-        </div>
-        
-        <ul class="nav-menu">
-            <li><a href="{{ url_for('teacher.dashboard') }}" class="nav-link"><i class="fa-solid fa-chart-pie"></i> Dashboard</a></li>
-            <li><a href="{{ url_for('teacher.register_student') }}" class="nav-link"><i class="fa-solid fa-user-plus"></i> Register Student</a></li>
-            <li><a href="{{ url_for('teacher.start_attendance') }}" class="nav-link"><i class="fa-solid fa-camera"></i> Start Attendance</a></li>
-            <li><a href="{{ url_for('teacher.attendance_history') }}" class="nav-link active"><i class="fa-solid fa-clock-rotate-left"></i> Session History</a></li>
-            <li><a href="{{ url_for('teacher.reports') }}" class="nav-link"><i class="fa-solid fa-file-invoice"></i> Reports Export</a></li>
-            <li><a href="{{ url_for('teacher.analytics') }}" class="nav-link"><i class="fa-solid fa-chart-line"></i> Analytics</a></li>
-        </ul>
-        
-        <div class="nav-logout">
-            <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: var(--danger);"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
-        </div>
-    </div>
+    <!-- Unified Sidebar Navigation -->
+    {% set active_page = 'attendance_history' %}
+    {% include "teacher/components/sidebar.html" %}
 
     <!-- Main Content Panel -->
-    <div class="main-panel">
+    <main class="main-panel">
         
-        <div class="panel-header">
-            <div>
-                <p style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">History & Records</p>
+        <header class="panel-header">
+            <div class="panel-header-text">
+                <p class="panel-subtitle">Attendance Records & Archives</p>
                 <h1 class="panel-title">Session Log History</h1>
             </div>
-        </div>
+            <div class="panel-header-actions">
+                <a href="{{ url_for('teacher.start_attendance') }}" class="btn btn-primary btn-sm">
+                    <i class="fa-solid fa-camera"></i>
+                    <span>New Session</span>
+                </a>
+            </div>
+        </header>
 
-        <!-- Filter Bar -->
-        <div class="glass-card animate-fade-in" style="margin-bottom: 24px; padding: 20px;">
-            <form method="GET" action="{{ url_for('teacher.attendance_history') }}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) 160px auto auto; gap: 12px; align-items: end;">
+        <!-- Filter Bar Card -->
+        <section class="glass-card animate-fade-in" style="margin-bottom: 24px; padding: 20px;">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+                <i class="fa-solid fa-filter" style="color: var(--primary-light); font-size: 0.95rem;"></i>
+                <h3 style="margin: 0; color: #ffffff; font-size: 1.05rem; font-weight: 700;">Filter Historical Sessions</h3>
+            </div>
+
+            <form method="GET" action="{{ url_for('teacher.attendance_history') }}" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)) 150px auto auto; gap: 10px; align-items: end;">
+                
+                <!-- Branch -->
                 <div class="form-group" style="margin: 0;">
-                    <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Branch</label>
-                    <select name="branch" class="form-control" style="height: 40px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                    <label class="form-label" style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 3px;">Branch</label>
+                    <select name="branch" class="form-control" style="height: 38px; font-size: 0.8125rem;">
                         <option value="all" {% if current_filters.branch == 'all' %}selected{% endif %}>All Branches</option>
                         <option value="CSE" {% if current_filters.branch == 'CSE' %}selected{% endif %}>CSE</option>
                         <option value="IT" {% if current_filters.branch == 'IT' %}selected{% endif %}>IT</option>
@@ -253,9 +56,10 @@
                     </select>
                 </div>
 
+                <!-- Semester -->
                 <div class="form-group" style="margin: 0;">
-                    <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Semester</label>
-                    <select name="semester" class="form-control" style="height: 40px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                    <label class="form-label" style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 3px;">Semester</label>
+                    <select name="semester" class="form-control" style="height: 38px; font-size: 0.8125rem;">
                         <option value="all" {% if current_filters.semester == 'all' %}selected{% endif %}>All Semesters</option>
                         {% for s in range(1, 9) %}
                         <option value="{{ s }}" {% if current_filters.semester == s|string or current_filters.semester == s~'th' %}selected{% endif %}>Sem {{ s }}</option>
@@ -263,9 +67,10 @@
                     </select>
                 </div>
 
+                <!-- Section -->
                 <div class="form-group" style="margin: 0;">
-                    <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Section</label>
-                    <select name="section" class="form-control" style="height: 40px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                    <label class="form-label" style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 3px;">Section</label>
+                    <select name="section" class="form-control" style="height: 38px; font-size: 0.8125rem;">
                         <option value="all" {% if current_filters.section == 'all' %}selected{% endif %}>All Sections</option>
                         <option value="A" {% if current_filters.section == 'A' %}selected{% endif %}>Section A</option>
                         <option value="B" {% if current_filters.section == 'B' %}selected{% endif %}>Section B</option>
@@ -274,9 +79,10 @@
                     </select>
                 </div>
 
+                <!-- Subject -->
                 <div class="form-group" style="margin: 0;">
-                    <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Subject</label>
-                    <select name="subject" class="form-control" style="height: 40px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                    <label class="form-label" style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 3px;">Subject</label>
+                    <select name="subject" class="form-control" style="height: 38px; font-size: 0.8125rem;">
                         <option value="all" {% if current_filters.subject == 'all' %}selected{% endif %}>All Subjects</option>
                         {% for sub in subjects %}
                         <option value="{{ sub }}" {% if current_filters.subject == sub %}selected{% endif %}>{{ sub }}</option>
@@ -284,22 +90,28 @@
                     </select>
                 </div>
 
+                <!-- Date -->
                 <div class="form-group" style="margin: 0;">
-                    <label class="form-label" style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Date</label>
-                    <input type="date" name="date" value="{{ current_filters.date or '' }}" class="form-control" style="height: 40px; background: rgba(15, 23, 42, 0.7); color: white; border-radius: 8px;">
+                    <label class="form-label" style="font-size: 0.7rem; text-transform: uppercase; margin-bottom: 3px;">Session Date</label>
+                    <input type="date" name="date" value="{{ current_filters.date or '' }}" class="form-control" style="height: 38px; font-size: 0.8125rem;">
                 </div>
 
-                <button type="submit" class="btn btn-primary" style="height: 40px; padding: 0 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-                    <i class="fa-solid fa-filter"></i> Filter
+                <!-- Filter Action -->
+                <button type="submit" class="btn btn-primary btn-sm" style="height: 38px; padding: 0 16px;">
+                    <i class="fa-solid fa-filter"></i>
+                    <span>Apply Filter</span>
                 </button>
 
-                <a href="{{ url_for('teacher.attendance_history') }}" class="btn btn-secondary" style="height: 40px; padding: 0 14px; border-radius: 8px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
-                    <i class="fa-solid fa-rotate-left"></i> Reset
+                <!-- Reset Action -->
+                <a href="{{ url_for('teacher.attendance_history') }}" class="btn btn-secondary btn-sm" style="height: 38px; padding: 0 14px;">
+                    <i class="fa-solid fa-rotate-left"></i>
+                    <span>Reset</span>
                 </a>
             </form>
-        </div>
+        </section>
 
-        <div class="glass-card animate-fade-in">
+        <!-- Sessions History Table Card -->
+        <section class="glass-card animate-fade-in">
             <div class="table-wrapper">
                 <table class="custom-table">
                     <thead>
@@ -313,7 +125,7 @@
                             <th>Attendees</th>
                             <th>Rate</th>
                             <th>Export Reports</th>
-                            <th>Actions</th>
+                            <th style="text-align: right;">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -321,28 +133,28 @@
                             {% for log in history %}
                             <tr id="session-row-{{ log.id }}">
                                 <td>
-                                    <a href="javascript:void(0)" onclick="openSessionDetailsModal('{{ log.id }}')" style="color: white; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 6px;" onmouseover="this.style.color='#818cf8'" onmouseout="this.style.color='white'" title="Click to view full attendance sheet">
-                                        <i class="fa-solid fa-clipboard-user" style="color: var(--primary);"></i>
+                                    <a href="javascript:void(0)" onclick="openSessionDetailsModal('{{ log.id }}')" style="color: #ffffff; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;" onmouseover="this.style.color='#818cf8'" onmouseout="this.style.color='#ffffff'" title="View student-wise attendance sheet">
+                                        <i class="fa-solid fa-clipboard-user" style="color: var(--primary-light);"></i>
                                         <span>{{ log.subject }}</span>
                                     </a>
                                 </td>
                                 <td>
-                                    <span class="badge" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; font-weight: 600;">
+                                    <span class="badge badge-primary">
                                         {{ log.branch or 'General' }}
                                     </span>
                                 </td>
                                 <td>
-                                    <span style="font-size: 0.85rem; color: var(--text-secondary);">
+                                    <span style="font-size: 0.8125rem; color: var(--text-secondary);">
                                         Sem {{ log.semester or '-' }} (Sec {{ log.section or '-' }})
                                     </span>
                                 </td>
                                 <td>{{ log.date }}</td>
-                                <td>{{ log.start_time }}</td>
+                                <td><span style="color: var(--text-muted); font-size: 0.8125rem;">{{ log.start_time }}</span></td>
                                 <td>
                                     {% if log.end_time == 'Active' %}
                                         <span class="badge badge-warning">Active</span>
                                     {% else %}
-                                        {{ log.end_time }}
+                                        <span style="color: var(--text-muted); font-size: 0.8125rem;">{{ log.end_time }}</span>
                                     {% endif %}
                                 </td>
                                 <td id="row-attendees-{{ log.id }}">
@@ -354,21 +166,21 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <div style="display: flex; gap: 8px;">
-                                        <a href="/reports/export/csv/{{ log.id }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
+                                    <div style="display: inline-flex; gap: 6px;">
+                                        <a href="/reports/export/csv/{{ log.id }}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem;" title="Download CSV">
                                             <i class="fa-solid fa-file-csv"></i> CSV
                                         </a>
-                                        <a href="/reports/export/excel/{{ log.id }}" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.8rem; border-radius: 6px;">
+                                        <a href="/reports/export/excel/{{ log.id }}" class="btn btn-secondary btn-sm" style="padding: 4px 8px; font-size: 0.75rem;" title="Download Excel">
                                             <i class="fa-solid fa-file-excel"></i> Excel
                                         </a>
                                     </div>
                                 </td>
-                                <td>
-                                    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-                                        <button type="button" class="btn btn-primary" onclick="openSessionDetailsModal('{{ log.id }}')" style="padding: 6px 14px; font-size: 0.8rem; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;">
+                                <td style="text-align: right;">
+                                    <div style="display: inline-flex; gap: 6px; align-items: center;">
+                                        <button type="button" class="btn btn-primary btn-sm" onclick="openSessionDetailsModal('{{ log.id }}')" style="padding: 5px 12px; font-size: 0.78rem;">
                                             <i class="fa-solid fa-eye"></i> View Attendance
                                         </button>
-                                        <a href="/teacher/session/{{ log.id }}/view" target="_blank" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8rem; border-radius: 6px;" title="Open Dedicated Attendance Sheet">
+                                        <a href="/teacher/session/{{ log.id }}/view" target="_blank" class="btn btn-secondary btn-sm" style="padding: 5px 8px; font-size: 0.78rem;" title="Open Dedicated Full Attendance Sheet">
                                             <i class="fa-solid fa-arrow-up-right-from-square"></i>
                                         </a>
                                     </div>
@@ -377,22 +189,22 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 24px;">No session logs recorded yet.</td>
+                                <td colspan="10" style="text-align: center; color: var(--text-muted); padding: 32px;">No session logs recorded matching your filter criteria.</td>
                             </tr>
                         {% endif %}
                     </tbody>
                 </table>
             </div>
-        </div>
+        </section>
 
-    </div>
+    </main>
 </div>
 
 <!-- Shared Session Attendance Details & Management Modal -->
 {% include "teacher/components/session_details_modal.html" %}
 
 <script>
-// Handle ?edit_session=<id> in URL
+// Automatically open modal if ?edit_session=<id> is present in URL
 window.addEventListener('DOMContentLoaded', () => {
     const params = new URLSearchParams(window.location.search);
     const editSessionId = params.get('edit_session');
